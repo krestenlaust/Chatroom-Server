@@ -1,17 +1,27 @@
 ﻿using System;
-using System.Collections.Generic;
+using System.Net.Sockets;
 using System.Text;
 
 namespace ChatrumServer.ClientPackets
 {
     public class ChangeNamePacket : ClientPacket
     {
-        public string Message { get; private set; }
+        public string Name { get; private set; }
 
-        public override void Parse(byte[] data)
+        public ChangeNamePacket()
         {
-            int length = BitConverter.ToInt32(data, 0);
-            Message = Encoding.UTF8.GetString(data, 4, length);
+            PacketType = ClientPacketType.ChangeName;
+        }
+
+        public override void Parse(NetworkStream stream)
+        {
+            byte[] lengthBytes = new byte[sizeof(int)];
+            stream.Read(lengthBytes, 0, sizeof(int));
+            int length = BitConverter.ToInt32(lengthBytes, 0);
+
+            byte[] nameBytes = new byte[length];
+            stream.Read(nameBytes, 0, length);
+            Name = Encoding.UTF8.GetString(nameBytes, 0, length);
         }
     }
 }

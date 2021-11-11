@@ -7,10 +7,10 @@ namespace ChatrumServer.Packets
     public class ReceiveMessagePacket : ServerPacket
     {
         public byte UserID { get; private set; }
-        public int Timestamp { get; private set; }
+        public long Timestamp { get; private set; }
         public string Message { get; private set; }
 
-        public ReceiveMessagePacket(byte userid, int timestamp, string message)
+        public ReceiveMessagePacket(byte userid, long timestamp, string message)
         {
             PacketType = ServerPacketType.ReceiveMessage;
 

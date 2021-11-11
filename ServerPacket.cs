@@ -11,6 +11,7 @@ namespace ChatrumServer
         LogMessage = 5,
         SendUserInfo = 7,
         SendUserID = 9,
+        UserLeft = 11,
     }
 
     public abstract class ServerPacket
