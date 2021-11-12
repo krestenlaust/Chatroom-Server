@@ -1,13 +1,13 @@
-﻿using ChatrumServer.ClientPackets;
-using ChatrumServer.Packets;
-using ChatrumServer.ServerPackets;
+﻿using ChatroomServer.ClientPackets;
+using ChatroomServer.Packets;
+using ChatroomServer.ServerPackets;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Net.Sockets;
 using System.Text;
 
-namespace ChatrumServer
+namespace ChatroomServer
 {
     public class Server
     {
@@ -27,26 +27,44 @@ namespace ChatrumServer
             tcpListener.BeginAcceptTcpClient(new AsyncCallback(OnClientConnect), null);
         }
 
+        private bool TryGetNextUserID(out byte userID)
+        {
+            userID = unchecked(currentUserID++);
+
+            if (userID == 0)
+            {
+                return false;
+            }
+
+            return true;
+        }
+
+        private long GetUnixTime() => DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+
         private void OnClientConnect(IAsyncResult ar)
         {
             TcpClient client = tcpListener.EndAcceptTcpClient(ar);
 
             NetworkStream stream = client.GetStream();
 
-            byte userID = unchecked(currentUserID++);
+            byte userID;
+            if (!TryGetNextUserID(out userID))
+            {
+                client.Close();
+                Console.WriteLine("Lobby full");
+                return;
+            }
+
             SendUserIDPacket userIDPacket = new SendUserIDPacket(userID);
 
             stream.Write(userIDPacket.Serialize());
 
-            ClientInfo clientInfo = new ClientInfo(client, DateTimeOffset.UtcNow.ToUnixTimeMilliseconds());
-         
+            ClientInfo clientInfo = new ClientInfo(client, GetUnixTime());
             clients.Add(userID, clientInfo);
 
-            tcpListener.BeginAcceptTcpClient(new AsyncCallback(OnClientConnect), null);
-
-            stream.BeginRead(clientInfo.Buffer, 0, clientInfo.Buffer.Length, new AsyncCallback(OnClientDataReceived), clientInfo);
-
             Console.WriteLine($"Client {userID} connected");
+
+            tcpListener.BeginAcceptTcpClient(new AsyncCallback(OnClientConnect), null);
         }
 
         public void Update()
@@ -55,10 +73,21 @@ namespace ChatrumServer
             foreach (var client in clients)
             {
                 // Ping client if more time than whats good, has passed.
-                if (DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() - client.Value.TimeSinceActive > MaxMillisecondsSinceLastActive)
+                long millisecondsDifference = GetUnixTime() - client.Value.TimeSinceActive;
+                if (millisecondsDifference <= MaxMillisecondsSinceLastActive)
                 {
-                    SendPacket(client.Key, client.Value, new PingPacket().Serialize());
+                    Console.WriteLine($"Client: " + millisecondsDifference);
+                    continue;
                 }
+
+                if (client.Value.Name is null)
+                {
+                    Console.WriteLine("Clinet timed out: " + client.Key);
+                    DisconnectClient(client.Key);
+                    continue;
+                }
+
+                SendPacket(client.Key, client.Value, new PingPacket().Serialize());
             }
 
             // Check for new packets from clients and parses them
@@ -106,6 +135,17 @@ namespace ChatrumServer
             }
         }
 
+        private void DisconnectClient(byte userID)
+        {
+            clients[userID].TcpClient?.Close();
+
+            // Remove client.
+            clients.Remove(userID);
+
+            // Send UserLeftPacket to all clients iteratively.
+            SendPacketAll(new UserLeftPacket(userID).Serialize(), userID);
+        }
+
         /// <summary>
         /// Returns whether the client is still connected.
         /// </summary>
@@ -123,13 +163,8 @@ namespace ChatrumServer
             }
             catch (IOException)
             {
-                // Remove client.
-                clients.Remove(userID);
-                // Send UserLeftPacket to all clients iteratively.
-                foreach (var clientInfo in clients)
-                {
-                    SendPacket(clientInfo.Key, clientInfo.Value, new UserLeftPacket(userID).Serialize());
-                }
+                // Disconnect client because it isn't connected.
+                DisconnectClient(userID);
             }
         }
 
@@ -138,6 +173,11 @@ namespace ChatrumServer
             foreach (var client in clients)
             {
                 if (client.Key == exceptUser)
+                {
+                    continue;
+                }
+
+                if (client.Value.Name is null)
                 {
                     continue;
                 }

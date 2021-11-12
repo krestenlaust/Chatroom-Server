@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace ChatrumServer.Packets
+namespace ChatroomServer.Packets
 {
     public class SendUserInfoPacket : ServerPacket
     {

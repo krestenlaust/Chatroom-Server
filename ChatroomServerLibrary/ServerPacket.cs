@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace ChatrumServer
+namespace ChatroomServer
 {
     public enum ServerPacketType : byte
     {

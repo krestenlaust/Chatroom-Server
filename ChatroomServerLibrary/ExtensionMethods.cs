@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace ChatrumServer
+namespace ChatroomServer
 {
     public static class ExtensionMethods
     {

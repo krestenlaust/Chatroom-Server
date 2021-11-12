@@ -2,7 +2,7 @@
 using System.Net.Sockets;
 using System.Text;
 
-namespace ChatrumServer.ClientPackets
+namespace ChatroomServer.ClientPackets
 {
     public class SendMessagePacket : ClientPacket
     {
