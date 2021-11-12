@@ -21,7 +21,7 @@ namespace ChatroomServer
                 sw.Restart();
                 server.Update();
 
-                while (sw.ElapsedMilliseconds < 1000)
+                while (sw.ElapsedMilliseconds < 34)
                     Thread.Sleep(0);
             }
         }
