@@ -19,7 +19,7 @@ namespace ChatroomServer.Packets
 
         public override byte[] Serialize()
         {
-            byte[] messageBytes = Message.SerializeAndPrependLength();
+            byte[] messageBytes = Message.SerializeAndPrependLengthUshort();
 
             byte[] bytes = new byte[1 + sizeof(int) + messageBytes.Length];
 

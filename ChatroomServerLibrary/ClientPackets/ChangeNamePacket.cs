@@ -15,9 +15,7 @@ namespace ChatroomServer.ClientPackets
 
         public override void Parse(NetworkStream stream)
         {
-            byte[] lengthBytes = new byte[sizeof(int)];
-            stream.Read(lengthBytes, 0, sizeof(int));
-            int length = BitConverter.ToInt32(lengthBytes, 0);
+            byte length = (byte)stream.ReadByte();
 
             byte[] nameBytes = new byte[length];
             stream.Read(nameBytes, 0, length);

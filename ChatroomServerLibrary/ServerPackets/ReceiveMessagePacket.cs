@@ -22,13 +22,18 @@ namespace ChatroomServer.Packets
         public override byte[] Serialize()
         {
             byte[] timestampBytes = BitConverter.GetBytes(Timestamp);
-            byte[] messageBytes = Message.SerializeAndPrependLength();
+            byte[] messageBytes = Message.SerializeAndPrependLengthUshort();
 
             byte[] bytes = new byte[1 + 1 + timestampBytes.Length + messageBytes.Length];
             int cur = 0;
-            bytes[cur++] = (byte)PacketType;
-            bytes[cur++] = UserID;
-            timestampBytes.CopyTo(bytes, cur++);
+            
+            bytes[cur] = (byte)PacketType;
+            cur += 1;
+
+            bytes[cur] = UserID;
+            cur += 1;
+
+            timestampBytes.CopyTo(bytes, cur);
             cur += timestampBytes.Length;
 
             messageBytes.CopyTo(bytes, cur);

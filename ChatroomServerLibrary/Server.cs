@@ -62,7 +62,7 @@ namespace ChatroomServer
             ClientInfo clientInfo = new ClientInfo(client, GetUnixTime());
             clients.Add(userID, clientInfo);
 
-            Console.WriteLine($"Client {userID} connected");
+            Console.WriteLine($"{client.Client.RemoteEndPoint} connected: ID {userID}");
 
             tcpListener.BeginAcceptTcpClient(new AsyncCallback(OnClientConnect), null);
         }
@@ -73,10 +73,10 @@ namespace ChatroomServer
             foreach (var client in clients)
             {
                 // Ping client if more time than whats good, has passed.
-                long millisecondsDifference = GetUnixTime() - client.Value.TimeSinceActive;
+                long millisecondsDifference = GetUnixTime() - client.Value.LastActiveTime;
                 if (millisecondsDifference <= MaxMillisecondsSinceLastActive)
                 {
-                    Console.WriteLine($"Client: " + millisecondsDifference);
+                    Console.WriteLine($"Client: {millisecondsDifference} ms since last message");
                     continue;
                 }
 
@@ -99,6 +99,9 @@ namespace ChatroomServer
                     continue;
                 }
 
+                // Refresh last active.
+                client.Value.LastActiveTime = GetUnixTime();
+
                 ClientPacketType packetType = (ClientPacketType)stream.ReadByte();
                 // Parse and handle the packets ChangeNamePacket and SendMessagePacket,
                 // by responding to all other clients with a message or a userinfo update
@@ -107,6 +110,21 @@ namespace ChatroomServer
                     case ClientPacketType.ChangeName:
                         ChangeNamePacket changeNamePacket = new ChangeNamePacket();
                         changeNamePacket.Parse(stream);
+
+                        if (client.Value.Name is null)
+                        {
+                            foreach (var c in clients)
+                            {
+                                if (c.Value.Name is null)
+                                {
+                                    continue;
+                                }
+
+                                SendUserInfoPacket packet = new SendUserInfoPacket(c.Key, c.Value.Name);
+                                byte[] packetBytes = packet.Serialize();
+                                stream.Write(packetBytes, 0, packetBytes.Length);
+                            }
+                        }
 
                         // Change the name of the client
                         client.Value.Name = changeNamePacket.Name;
@@ -118,11 +136,11 @@ namespace ChatroomServer
                         SendMessagePacket sendMessagePacket = new SendMessagePacket();
                         sendMessagePacket.Parse(stream);
 
-                        ReceiveMessagePacket receiveMessagePacket = new ReceiveMessagePacket(client.Key, DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(), sendMessagePacket.Message);
+                        ReceiveMessagePacket receiveMessagePacket = new ReceiveMessagePacket(client.Key, GetUnixTime(), sendMessagePacket.Message);
 
                         if (sendMessagePacket.TargetUserID == 0)
                         {
-                            SendPacketAll(receiveMessagePacket.Serialize(), client.Key);
+                            SendPacketAll(receiveMessagePacket.Serialize());
                         }
                         else
                         {
@@ -137,6 +155,8 @@ namespace ChatroomServer
 
         private void DisconnectClient(byte userID)
         {
+            Console.WriteLine($"Disconnected ID: {userID}");
+
             clients[userID].TcpClient?.Close();
 
             // Remove client.
@@ -154,7 +174,7 @@ namespace ChatroomServer
         /// <returns></returns>
         private void SendPacket(byte userID, ClientInfo client, byte[] data)
         {
-            client.TimeSinceActive = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+            client.LastActiveTime = GetUnixTime();
             
             try
             {

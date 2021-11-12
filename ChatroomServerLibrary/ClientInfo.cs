@@ -9,11 +9,12 @@ namespace ChatroomServer
     {
         public string Name;
         public TcpClient TcpClient;
-        public long TimeSinceActive;
+        public long LastActiveTime;
 
-        public ClientInfo(TcpClient tcpClient, long timeSinceActive)
+        public ClientInfo(TcpClient tcpClient, long lastActiveTime)
         {
-
+            TcpClient = tcpClient;
+            LastActiveTime = lastActiveTime;
         }
     }
 }

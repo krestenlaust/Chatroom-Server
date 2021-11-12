@@ -18,9 +18,9 @@ namespace ChatroomServer.ClientPackets
         {
             TargetUserID = (byte)stream.ReadByte();
 
-            byte[] lengthBytes = new byte[sizeof(int)];
-            stream.Read(lengthBytes, 0, sizeof(int));
-            int length = BitConverter.ToInt32(lengthBytes, 0);
+            byte[] lengthBytes = new byte[sizeof(ushort)];
+            stream.Read(lengthBytes, 0, sizeof(ushort));
+            ushort length = BitConverter.ToUInt16(lengthBytes, 0);
 
             byte[] messageBytes = new byte[length];
             stream.Read(messageBytes, 0, length);

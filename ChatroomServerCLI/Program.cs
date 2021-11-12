@@ -1,9 +1,9 @@
-﻿using System;
+﻿using ChatroomServer;
+using System;
 using System.Diagnostics;
 using System.Threading;
-using ChatroomServer;
 
-namespace ChatroomServer
+namespace ChatroomServerCLI
 {
     class Program
     {
