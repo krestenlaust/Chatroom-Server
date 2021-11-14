@@ -5,7 +5,8 @@ namespace ChatroomServer
     public enum ClientPacketType : byte
     {
         SendMessage = 2,
-        ChangeName = 4
+        ChangeName = 4,
+        Disconnect = 10
     }
 
     public abstract class ClientPacket
