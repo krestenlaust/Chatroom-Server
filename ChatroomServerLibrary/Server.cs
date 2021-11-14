@@ -146,6 +146,10 @@ namespace ChatroomServer
                             SendPacket(sendMessagePacket.TargetUserID, clients[sendMessagePacket.TargetUserID], receiveMessagePacket.Serialize());
                         }
                         break;
+                    case ClientPacketType.Disconnect:
+                        Console.WriteLine($"Client: {client.Value.Name} has disconnected");
+                        DisconnectClient(client.Key);
+                        break;
                     default:
                         break;
                 }
