@@ -1,9 +1,9 @@
-﻿using ChatroomServer;
-using System;
+﻿using System;
 using System.Diagnostics;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
+using ChatroomServer;
 
 namespace ChatroomServerCLI
 {
@@ -24,7 +24,9 @@ namespace ChatroomServerCLI
                 server.Update();
 
                 while (sw.ElapsedMilliseconds < 34)
+                {
                     Thread.Sleep(0);
+                }
             }
         }
 
