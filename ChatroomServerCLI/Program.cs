@@ -12,7 +12,7 @@ namespace ChatroomServerCLI
             Console.WriteLine("Hello World!");
             Server server = new Server(25565);
             server.Start();
-            Console.WriteLine("Listing on 0.0.0.0:25565");
+            Console.WriteLine($"Listening on {LocalIP}:25565");
 
             Stopwatch sw = new Stopwatch();
             sw.Start();
@@ -23,6 +23,22 @@ namespace ChatroomServerCLI
 
                 while (sw.ElapsedMilliseconds < 34)
                     Thread.Sleep(0);
+            }
+        }
+
+        private static string LocalIP
+        {
+            get
+            {
+                IPAddress[] addresses = Dns.GetHostAddresses(Dns.GetHostName());
+                foreach (IPAddress address in addresses)
+                {
+                    if (address.AddressFamily == AddressFamily.InterNetwork)
+                    {
+                        return address.ToString();
+                    }
+                }
+                return "0.0.0.0";
             }
         }
     }
