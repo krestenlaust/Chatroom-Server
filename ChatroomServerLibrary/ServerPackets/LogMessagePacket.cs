@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace ChatroomServer.Packets
 {
@@ -19,7 +17,7 @@ namespace ChatroomServer.Packets
 
         public override byte[] Serialize()
         {
-            byte[] messageBytes = Message.SerializeAndPrependLengthUshort();
+            byte[] messageBytes = SerializationHelper.SerializeAndPrependLengthUshort(Message);
 
             byte[] bytes = new byte[1 + sizeof(int) + messageBytes.Length];
 

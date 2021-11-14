@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
+#nullable enable
 namespace ChatroomServer.ServerPackets
 {
     public class UserLeftPacket : ServerPacket

@@ -5,16 +5,15 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Net.Sockets;
-using System.Text;
 
+#nullable enable
 namespace ChatroomServer
 {
     public class Server
     {
         private const int MaxMillisecondsSinceLastActive = 10000;
-        private Dictionary<byte, ClientInfo> clients = new Dictionary<byte, ClientInfo>();
-        private TcpListener tcpListener;
-        private byte currentUserID = 1;
+        private readonly Dictionary<byte, ClientInfo> clients = new Dictionary<byte, ClientInfo>();
+        private readonly TcpListener tcpListener;
 
         public Server(short port)
         {
@@ -27,44 +26,47 @@ namespace ChatroomServer
             tcpListener.BeginAcceptTcpClient(new AsyncCallback(OnClientConnect), null);
         }
 
-        private bool TryGetNextUserID(out byte userID)
+        private byte? GetNextUserID()
         {
-            userID = unchecked(currentUserID++);
-
-            if (userID == 0)
+            for (byte i = 1; i < byte.MaxValue; i++)
             {
-                return false;
+                if (!clients.ContainsKey(i))
+                {
+                    return i;
+                }
             }
-
-            return true;
+            
+            return null;
         }
 
         private long GetUnixTime() => DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
 
         private void OnClientConnect(IAsyncResult ar)
         {
-            TcpClient client = tcpListener.EndAcceptTcpClient(ar);
+            // Begin listening for next.
+            tcpListener.BeginAcceptTcpClient(new AsyncCallback(OnClientConnect), null);
 
+
+            // Begin handling the connecting client.
+            TcpClient client = tcpListener.EndAcceptTcpClient(ar);
             NetworkStream stream = client.GetStream();
 
-            byte userID;
-            if (!TryGetNextUserID(out userID))
+            // If lobby is full, turn away client.
+            if (!(GetNextUserID() is byte userID))
             {
                 client.Close();
                 Console.WriteLine("Lobby full");
                 return;
             }
 
-            SendUserIDPacket userIDPacket = new SendUserIDPacket(userID);
+            // Assign client their ID
+            stream.Write(new SendUserIDPacket(userID).Serialize());
 
-            stream.Write(userIDPacket.Serialize());
 
             ClientInfo clientInfo = new ClientInfo(client, GetUnixTime());
             clients.Add(userID, clientInfo);
 
             Console.WriteLine($"{client.Client.RemoteEndPoint} connected: ID {userID}");
-
-            tcpListener.BeginAcceptTcpClient(new AsyncCallback(OnClientConnect), null);
         }
 
         public void Update()
@@ -73,16 +75,16 @@ namespace ChatroomServer
             foreach (var client in clients)
             {
                 // Ping client if more time than whats good, has passed.
-                long millisecondsDifference = GetUnixTime() - client.Value.LastActiveTime;
-                if (millisecondsDifference <= MaxMillisecondsSinceLastActive)
+                long timeDifference = GetUnixTime() - client.Value.LastActiveTime;
+                if (timeDifference <= MaxMillisecondsSinceLastActive)
                 {
-                    Console.WriteLine($"Client: {millisecondsDifference} ms since last message");
+                    Console.WriteLine($"Client: {timeDifference} ms since last message");
                     continue;
                 }
 
                 if (client.Value.Name is null)
                 {
-                    Console.WriteLine("Clinet timed out: " + client.Key);
+                    Console.WriteLine("Client timed out: " + client.Key);
                     DisconnectClient(client.Key);
                     continue;
                 }
@@ -103,13 +105,13 @@ namespace ChatroomServer
                 client.Value.LastActiveTime = GetUnixTime();
 
                 ClientPacketType packetType = (ClientPacketType)stream.ReadByte();
+
                 // Parse and handle the packets ChangeNamePacket and SendMessagePacket,
                 // by responding to all other clients with a message or a userinfo update
                 switch (packetType)
                 {
                     case ClientPacketType.ChangeName:
-                        ChangeNamePacket changeNamePacket = new ChangeNamePacket();
-                        changeNamePacket.Parse(stream);
+                        var changeNamePacket = new ChangeNamePacket(stream);
 
                         if (client.Value.Name is null)
                         {
@@ -120,8 +122,7 @@ namespace ChatroomServer
                                     continue;
                                 }
 
-                                SendUserInfoPacket packet = new SendUserInfoPacket(c.Key, c.Value.Name);
-                                byte[] packetBytes = packet.Serialize();
+                                byte[] packetBytes = new SendUserInfoPacket(c.Key, c.Value.Name).Serialize();
                                 stream.Write(packetBytes, 0, packetBytes.Length);
                             }
                         }
@@ -129,14 +130,12 @@ namespace ChatroomServer
                         // Change the name of the client
                         client.Value.Name = changeNamePacket.Name;
 
-                        SendUserInfoPacket sendUserInfoPacket = new SendUserInfoPacket(client.Key, client.Value.Name);
-                        SendPacketAll(sendUserInfoPacket.Serialize());
+                        SendPacketAll(new SendUserInfoPacket(client.Key, client.Value.Name).Serialize());
                         break;
                     case ClientPacketType.SendMessage:
-                        SendMessagePacket sendMessagePacket = new SendMessagePacket();
-                        sendMessagePacket.Parse(stream);
+                        var sendMessagePacket = new SendMessagePacket(stream);
 
-                        ReceiveMessagePacket receiveMessagePacket = new ReceiveMessagePacket(client.Key, GetUnixTime(), sendMessagePacket.Message);
+                        var receiveMessagePacket = new ReceiveMessagePacket(client.Key, GetUnixTime(), sendMessagePacket.Message);
 
                         if (sendMessagePacket.TargetUserID == 0)
                         {

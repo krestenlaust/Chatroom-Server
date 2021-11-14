@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
+#nullable enable
 namespace ChatroomServer.Packets
 {
     public class SendUserInfoPacket : ServerPacket
@@ -19,7 +20,7 @@ namespace ChatroomServer.Packets
 
         public override byte[] Serialize()
         {
-            byte[] nameBytes = Name.SerializeAndPrependLengthByte();
+            byte[] nameBytes = SerializationHelper.SerializeAndPrependLengthByte(Name);
             byte[] bytes = new byte[1 + 1 + nameBytes.Length];
 
             int cur = 0;

@@ -1,15 +1,13 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Net.Sockets;
-using System.Text;
+﻿using System.Net.Sockets;
 
+#nullable enable
 namespace ChatroomServer
 {
     public class ClientInfo
     {
-        public string Name;
         public TcpClient TcpClient;
         public long LastActiveTime;
+        public string? Name;
 
         public ClientInfo(TcpClient tcpClient, long lastActiveTime)
         {

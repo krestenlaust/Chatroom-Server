@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
+#nullable enable
 namespace ChatroomServer.Packets
 {
     public class ReceiveMessagePacket : ServerPacket
@@ -22,7 +23,7 @@ namespace ChatroomServer.Packets
         public override byte[] Serialize()
         {
             byte[] timestampBytes = BitConverter.GetBytes(Timestamp);
-            byte[] messageBytes = Message.SerializeAndPrependLengthUshort();
+            byte[] messageBytes = SerializationHelper.SerializeAndPrependLengthUshort(Message);
 
             byte[] bytes = new byte[1 + 1 + timestampBytes.Length + messageBytes.Length];
             int cur = 0;
