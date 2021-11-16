@@ -1,10 +1,12 @@
 using System;
+using System.Text;
 
 namespace ChatroomServer.Packets
 {
     public class LogMessagePacket : ServerPacket
     {
         public long Timestamp { get; private set; }
+
         public string Message { get; private set; }
 
         public LogMessagePacket(long timestamp, string message)
@@ -17,20 +19,20 @@ namespace ChatroomServer.Packets
 
         public override byte[] Serialize()
         {
-            byte[] messageBytes = SerializationHelper.SerializeAndPrependLengthUshort(Message);
+            PacketBuilder builder = new PacketBuilder(
+                sizeof(byte) +
+                sizeof(long) +
+                sizeof(ushort) +
+                Encoding.UTF8.GetByteCount(Message));
 
-            byte[] bytes = new byte[1 + sizeof(long) + messageBytes.Length];
+            builder.AddByte((byte)PacketType);
 
-            int cur = 0;
-            bytes[cur++] = (byte)PacketType;
-            
-            BitConverter.GetBytes(Timestamp).CopyTo(bytes, cur);
-            cur += sizeof(long);
+            builder.AddInt64(Timestamp);
 
-            messageBytes.CopyTo(bytes, cur);
-            cur += messageBytes.Length;
+            builder.AddUInt16((ushort)Encoding.UTF8.GetByteCount(Message));
+            builder.AddStringUTF8(Message);
 
-            return bytes;
+            return builder.Data;
         }
     }
 }

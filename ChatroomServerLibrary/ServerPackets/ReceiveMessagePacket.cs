@@ -8,7 +8,9 @@ namespace ChatroomServer.Packets
     public class ReceiveMessagePacket : ServerPacket
     {
         public byte UserID { get; private set; }
+
         public long Timestamp { get; private set; }
+
         public string Message { get; private set; }
 
         public ReceiveMessagePacket(byte userid, long timestamp, string message)
@@ -22,25 +24,23 @@ namespace ChatroomServer.Packets
 
         public override byte[] Serialize()
         {
-            byte[] timestampBytes = BitConverter.GetBytes(Timestamp);
-            byte[] messageBytes = SerializationHelper.SerializeAndPrependLengthUshort(Message);
+            PacketBuilder builder = new PacketBuilder(
+                sizeof(ServerPacketType) +
+                sizeof(byte) +
+                sizeof(long) +
+                sizeof(ushort) +
+                Encoding.UTF8.GetByteCount(Message));
 
-            byte[] bytes = new byte[1 + 1 + timestampBytes.Length + messageBytes.Length];
-            int cur = 0;
-            
-            bytes[cur] = (byte)PacketType;
-            cur += 1;
+            builder.AddByte((byte)PacketType);
 
-            bytes[cur] = UserID;
-            cur += 1;
+            builder.AddByte(UserID);
 
-            timestampBytes.CopyTo(bytes, cur);
-            cur += timestampBytes.Length;
+            builder.AddInt64(Timestamp);
 
-            messageBytes.CopyTo(bytes, cur);
-            cur += messageBytes.Length;
+            builder.AddUInt16((ushort)Encoding.UTF8.GetByteCount(Message));
+            builder.AddStringUTF8(Message);
 
-            return bytes;
+            return builder.Data;
         }
     }
 }

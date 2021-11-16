@@ -4,6 +4,9 @@ using System.Text;
 
 namespace ChatroomServer
 {
+    /// <summary>
+    /// Helper struct for constructing packets.
+    /// </summary>
     public struct PacketBuilder
     {
         private readonly byte[] packet;
@@ -14,12 +17,12 @@ namespace ChatroomServer
             get => packet;
         }
 
-        public PacketBuilder(ushort size)
+        public PacketBuilder(int size)
         {
             packet = new byte[size];
             packetCursor = 0;
         }
-        
+
         public void AddBytes(byte[] bytes)
         {
             for (int i = 0; i < bytes.Length; i++)
@@ -40,5 +43,7 @@ namespace ChatroomServer
         public void AddInt32(int value) => AddBytes(BitConverter.GetBytes(value));
 
         public void AddInt64(long value) => AddBytes(BitConverter.GetBytes(value));
+
+        public void AddStringUTF8(string value) => AddBytes(Encoding.UTF8.GetBytes(value));
     }
 }

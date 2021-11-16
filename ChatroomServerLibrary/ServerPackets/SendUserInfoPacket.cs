@@ -8,6 +8,7 @@ namespace ChatroomServer.Packets
     public class SendUserInfoPacket : ServerPacket
     {
         public byte UserID { get; private set; }
+
         public string Name { get; private set; }
 
         public SendUserInfoPacket(byte userID, string name)
@@ -18,19 +19,22 @@ namespace ChatroomServer.Packets
             Name = name;
         }
 
+        /// <inheritdoc/>
         public override byte[] Serialize()
         {
-            byte[] nameBytes = SerializationHelper.SerializeAndPrependLengthByte(Name);
-            byte[] bytes = new byte[1 + 1 + nameBytes.Length];
+            PacketBuilder builder = new PacketBuilder(
+                sizeof(ServerPacketType) +
+                sizeof(byte) +
+                sizeof(byte) +
+                Encoding.UTF8.GetByteCount(Name));
 
-            int cur = 0;
-            bytes[cur++] = (byte)PacketType;
-            bytes[cur++] = UserID;
+            builder.AddByte((byte)PacketType);
+            builder.AddByte(UserID);
 
-            nameBytes.CopyTo(bytes, cur);
-            cur += nameBytes.Length;
+            builder.AddByte((byte)Encoding.UTF8.GetByteCount(Name));
+            builder.AddStringUTF8(Name);
 
-            return bytes;
+            return builder.Data;
         }
     }
 }

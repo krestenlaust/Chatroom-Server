@@ -2,6 +2,9 @@
 
 namespace ChatroomServer
 {
+    /// <summary>
+    /// The types of packets the server recieves from the clients.
+    /// </summary>
     public enum ClientPacketType : byte
     {
         SendMessage = 2,

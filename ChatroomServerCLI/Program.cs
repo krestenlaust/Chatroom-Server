@@ -4,6 +4,7 @@ using System.Net;
 using System.Net.Sockets;
 using System.Threading;
 using ChatroomServer;
+using ChatroomServer.Packets;
 
 namespace ChatroomServerCLI
 {
@@ -15,6 +16,10 @@ namespace ChatroomServerCLI
             Server server = new Server(25565);
             server.Start();
             Console.WriteLine($"Listening on {LocalIP}:25565");
+
+            SendUserInfoPacket test2 = new SendUserInfoPacket(0, "Der er sket noget vigtigt!");
+            test2.Serialize();
+
 
             Stopwatch sw = new Stopwatch();
             sw.Start();

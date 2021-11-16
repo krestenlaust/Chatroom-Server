@@ -61,7 +61,7 @@ namespace ChatroomServer
             // Assign client their ID
             stream.Write(new SendUserIDPacket(userID).Serialize());
 
-            ClientInfo clientInfo = new ClientInfo(client, GetUnixTime());
+            ClientInfo clientInfo = new ClientInfo(client, GetUnixTime()); 
             clients.Add(userID, clientInfo);
 
             Console.WriteLine($"{client.Client.RemoteEndPoint} connected: ID {userID}");
@@ -124,6 +124,7 @@ namespace ChatroomServer
                                 stream.Write(packetBytes, 0, packetBytes.Length);
                             }
                         }
+
                         SendPacketAll(new LogMessagePacket(GetUnixTime(), $"{changeNamePacket.Name} has connected").Serialize());
 
                         // Change the name of the client
@@ -134,16 +135,18 @@ namespace ChatroomServer
                     case ClientPacketType.SendMessage:
                         var sendMessagePacket = new SendMessagePacket(stream);
 
-                        var receiveMessagePacket = new ReceiveMessagePacket(client.Key, GetUnixTime(), sendMessagePacket.Message);
+                        var responsePacket = new ReceiveMessagePacket(client.Key, GetUnixTime(), sendMessagePacket.Message).Serialize();
 
                         if (sendMessagePacket.TargetUserID == 0)
                         {
-                            SendPacketAll(receiveMessagePacket.Serialize());
+                            SendPacketAll(responsePacket);
                         }
                         else
                         {
-                            SendPacket(sendMessagePacket.TargetUserID, clients[sendMessagePacket.TargetUserID], receiveMessagePacket.Serialize());
+                            SendPacket(sendMessagePacket.TargetUserID, clients[sendMessagePacket.TargetUserID], responsePacket);
+                            SendPacket(client.Key, client.Value, responsePacket);
                         }
+
                         break;
                     case ClientPacketType.Disconnect:
                         Console.WriteLine($"Client: {client.Value.Name} has disconnected");
@@ -178,7 +181,7 @@ namespace ChatroomServer
         private void SendPacket(byte userID, ClientInfo client, byte[] data)
         {
             client.LastActiveTime = GetUnixTime();
-            
+
             try
             {
                 NetworkStream stream = client.TcpClient.GetStream();

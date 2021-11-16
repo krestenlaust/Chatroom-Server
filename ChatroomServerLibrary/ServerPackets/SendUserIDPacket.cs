@@ -15,11 +15,13 @@ namespace ChatroomServer.Packets
             UserID = userid;
         }
 
+        /// <inheritdoc/>
         public override byte[] Serialize()
         {
-            return new byte[] {
+            return new byte[]
+            {
                 (byte)PacketType,
-                UserID
+                UserID,
             };
         }
     }
