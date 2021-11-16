@@ -18,7 +18,7 @@ namespace ChatroomServer
         public Server(short port)
         {
             tcpListener = new TcpListener(System.Net.IPAddress.Any, port);
-        }   
+        }
 
         public void Start()
         {
@@ -35,7 +35,7 @@ namespace ChatroomServer
                     return i;
                 }
             }
-            
+
             return null;
         }
 
@@ -45,7 +45,6 @@ namespace ChatroomServer
         {
             // Begin listening for next.
             tcpListener.BeginAcceptTcpClient(new AsyncCallback(OnClientConnect), null);
-
 
             // Begin handling the connecting client.
             TcpClient client = tcpListener.EndAcceptTcpClient(ar);
@@ -61,7 +60,6 @@ namespace ChatroomServer
 
             // Assign client their ID
             stream.Write(new SendUserIDPacket(userID).Serialize());
-
 
             ClientInfo clientInfo = new ClientInfo(client, GetUnixTime());
             clients.Add(userID, clientInfo);
