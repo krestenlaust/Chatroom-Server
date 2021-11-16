@@ -124,6 +124,7 @@ namespace ChatroomServer
                                 stream.Write(packetBytes, 0, packetBytes.Length);
                             }
                         }
+                        SendPacketAll(new LogMessagePacket(GetUnixTime(), $"{changeNamePacket.Name} has connected").Serialize());
 
                         // Change the name of the client
                         client.Value.Name = changeNamePacket.Name;
@@ -146,6 +147,7 @@ namespace ChatroomServer
                         break;
                     case ClientPacketType.Disconnect:
                         Console.WriteLine($"Client: {client.Value.Name} has disconnected");
+                        SendPacketAll(new LogMessagePacket(GetUnixTime(), $"{client.Value.Name} has disconnected").Serialize());
                         DisconnectClient(client.Key);
                         break;
                     default:

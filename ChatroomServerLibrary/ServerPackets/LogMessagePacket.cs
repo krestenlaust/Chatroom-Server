@@ -1,13 +1,13 @@
-﻿using System;
+using System;
 
 namespace ChatroomServer.Packets
 {
     public class LogMessagePacket : ServerPacket
     {
-        public int Timestamp { get; private set; }
+        public long Timestamp { get; private set; }
         public string Message { get; private set; }
 
-        public LogMessagePacket(int timestamp, string message)
+        public LogMessagePacket(long timestamp, string message)
         {
             PacketType = ServerPacketType.LogMessage;
 
@@ -19,13 +19,13 @@ namespace ChatroomServer.Packets
         {
             byte[] messageBytes = SerializationHelper.SerializeAndPrependLengthUshort(Message);
 
-            byte[] bytes = new byte[1 + sizeof(int) + messageBytes.Length];
+            byte[] bytes = new byte[1 + sizeof(long) + messageBytes.Length];
 
             int cur = 0;
             bytes[cur++] = (byte)PacketType;
             
             BitConverter.GetBytes(Timestamp).CopyTo(bytes, cur);
-            cur += sizeof(int);
+            cur += sizeof(long);
 
             messageBytes.CopyTo(bytes, cur);
             cur += messageBytes.Length;
