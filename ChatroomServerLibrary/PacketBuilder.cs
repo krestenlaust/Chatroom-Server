@@ -38,6 +38,8 @@ namespace ChatroomServer
             packetCursor++;
         }
 
+        public void AddBool(bool value) => AddByte(BitConverter.GetBytes(value)[0]);
+
         public void AddUInt16(ushort value) => AddBytes(BitConverter.GetBytes(value));
 
         public void AddInt32(int value) => AddBytes(BitConverter.GetBytes(value));
