@@ -125,6 +125,8 @@ namespace ChatroomServer
                             }
                         }
 
+                        Console.WriteLine("User connected: " + changeNamePacket.Name);
+
                         SendPacketAll(new LogMessagePacket(GetUnixTime(), $"{changeNamePacket.Name} has connected").Serialize());
 
                         // Change the name of the client
