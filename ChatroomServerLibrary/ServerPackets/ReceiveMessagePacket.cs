@@ -7,7 +7,10 @@ namespace ChatroomServer.Packets
 {
     public class ReceiveMessagePacket : ServerPacket
     {
-        public bool PrivateMessage { get; private set; }
+        /// <summary>
+        /// 0 if public.
+        /// </summary>
+        public byte TargetUserID { get; private set; }
 
         public byte UserID { get; private set; }
 
@@ -15,12 +18,12 @@ namespace ChatroomServer.Packets
 
         public string Message { get; private set; }
 
-        public ReceiveMessagePacket(byte userid, bool privateMessage, long timestamp, string message)
+        public ReceiveMessagePacket(byte userid, byte targetID, long timestamp, string message)
         {
             PacketType = ServerPacketType.ReceiveMessage;
 
             UserID = userid;
-            PrivateMessage = privateMessage;
+            TargetUserID = targetID;
             Timestamp = timestamp;
             Message = message;
         }
@@ -29,7 +32,7 @@ namespace ChatroomServer.Packets
         {
             PacketBuilder builder = new PacketBuilder(
                 sizeof(ServerPacketType) +
-                sizeof(bool) +
+                sizeof(byte) +
                 sizeof(byte) +
                 sizeof(long) +
                 sizeof(ushort) +
@@ -37,7 +40,7 @@ namespace ChatroomServer.Packets
 
             builder.AddByte((byte)PacketType);
 
-            builder.AddBool(PrivateMessage);
+            builder.AddByte(TargetUserID);
 
             builder.AddByte(UserID);
 

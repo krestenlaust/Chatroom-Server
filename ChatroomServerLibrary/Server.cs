@@ -137,7 +137,7 @@ namespace ChatroomServer
                     case ClientPacketType.SendMessage:
                         var sendMessagePacket = new SendMessagePacket(stream);
 
-                        var responsePacket = new ReceiveMessagePacket(client.Key, GetUnixTime(), sendMessagePacket.Message).Serialize();
+                        var responsePacket = new ReceiveMessagePacket(client.Key, sendMessagePacket.TargetUserID, GetUnixTime(), sendMessagePacket.Message).Serialize();
 
                         if (sendMessagePacket.TargetUserID == 0)
                         {
