@@ -11,7 +11,7 @@ namespace ChatroomServer
 {
     public class Server
     {
-        private const int MaxMillisecondsSinceLastActive = 10000;
+        private const int MaxMillisecondsSinceLastActive = 1000000;
         private readonly Dictionary<byte, ClientInfo> clients = new Dictionary<byte, ClientInfo>();
         private readonly TcpListener tcpListener;
 
@@ -61,7 +61,7 @@ namespace ChatroomServer
             // Assign client their ID
             stream.Write(new SendUserIDPacket(userID).Serialize());
 
-            ClientInfo clientInfo = new ClientInfo(client, GetUnixTime()); 
+            ClientInfo clientInfo = new ClientInfo(client, GetUnixTime());
             clients.Add(userID, clientInfo);
 
             Console.WriteLine($"{client.Client.RemoteEndPoint} connected: ID {userID}");
@@ -76,7 +76,7 @@ namespace ChatroomServer
                 long timeDifference = GetUnixTime() - client.Value.LastActiveTime;
                 if (timeDifference <= MaxMillisecondsSinceLastActive)
                 {
-                    Console.WriteLine($"Client: {timeDifference} ms since last message");
+                    //Console.WriteLine($"Client: {timeDifference} ms since last message");
                     continue;
                 }
 
@@ -138,6 +138,8 @@ namespace ChatroomServer
                         var sendMessagePacket = new SendMessagePacket(stream);
 
                         var responsePacket = new ReceiveMessagePacket(client.Key, sendMessagePacket.TargetUserID, GetUnixTime(), sendMessagePacket.Message).Serialize();
+
+                        Console.WriteLine($"Message received");
 
                         if (sendMessagePacket.TargetUserID == 0)
                         {

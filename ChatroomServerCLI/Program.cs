@@ -13,13 +13,10 @@ namespace ChatroomServerCLI
         static void Main(string[] args)
         {
             Console.WriteLine("Hello World!");
-            Server server = new Server(25565);
+            const short serverPort = 25565;
+            Server server = new Server(serverPort);
             server.Start();
-            Console.WriteLine($"Listening on {LocalIP}:25565");
-
-            SendUserInfoPacket test2 = new SendUserInfoPacket(0, "Der er sket noget vigtigt!");
-            test2.Serialize();
-
+            Console.WriteLine($"Listening on {LocalIP}:{serverPort}");
 
             Stopwatch sw = new Stopwatch();
             sw.Start();
@@ -47,6 +44,7 @@ namespace ChatroomServerCLI
                         return address.ToString();
                     }
                 }
+
                 return "0.0.0.0";
             }
         }
