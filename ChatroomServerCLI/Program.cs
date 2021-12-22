@@ -2,33 +2,55 @@
 using System.Diagnostics;
 using System.Net;
 using System.Net.Sockets;
+using System.Runtime.InteropServices;
 using System.Threading;
 using ChatroomServer;
-using ChatroomServer.Packets;
+using ChatroomServer.Loggers;
 
 namespace ChatroomServerCLI
 {
-    class Program
+    internal class Program
     {
-        static void Main(string[] args)
+        private static void Main(string[] args)
         {
-            Console.WriteLine("Hello World!");
             const short serverPort = 25565;
-            Server server = new Server(serverPort);
+
+            Logger serverLogger;
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+            {
+                serverLogger = new ANSILogger();
+            }
+            else
+            {
+                serverLogger = new ConsoleLogger();
+            }
+
+            Console.WriteLine($"Logging with verbosity level: {Enum.GetName(typeof(LogType), serverLogger.LogLevel)}");
+
+            using Server server = new Server(serverPort, serverLogger);
             server.Start();
             Console.WriteLine($"Listening on {LocalIP}:{serverPort}");
 
             Stopwatch sw = new Stopwatch();
             sw.Start();
-            while (true)
-            {
-                sw.Restart();
-                server.Update();
 
-                while (sw.ElapsedMilliseconds < 34)
+            try
+            {
+                while (true)
                 {
-                    Thread.Sleep(0);
+                    sw.Restart();
+                    server.Update();
+
+                    while (sw.ElapsedMilliseconds < 1000 / 10)
+                    {
+                        Thread.Sleep(0);
+                    }
                 }
+            }
+            catch (Exception ex)
+            {
+                serverLogger.Error($"Exception occured: {ex}");
+                throw;
             }
         }
 

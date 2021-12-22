@@ -1,70 +1,52 @@
-﻿using ChatroomServer.ClientPackets;
-using ChatroomServer.Packets;
-using ChatroomServer.ServerPackets;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Net.Sockets;
+using ChatroomServer.ClientPackets;
+using ChatroomServer.Packets;
+using ChatroomServer.ServerPackets;
 
 #nullable enable
 namespace ChatroomServer
 {
-    public class Server
+    /// <summary>
+    /// A chatroom server instance.
+    /// </summary>
+    public class Server : IDisposable
     {
         private const int MaxMillisecondsSinceLastActive = 1000000;
         private readonly Dictionary<byte, ClientInfo> clients = new Dictionary<byte, ClientInfo>();
         private readonly TcpListener tcpListener;
+        private Logger? logger;
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Server"/> class.
+        /// </summary>
+        /// <param name="port">The port on which to start the server.</param>
         public Server(short port)
         {
             tcpListener = new TcpListener(System.Net.IPAddress.Any, port);
         }
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Server"/> class.
+        /// </summary>
+        /// <param name="port">The port on which to start the server.</param>
+        /// <param name="logger">The logger with which to log information.</param>
+        public Server(short port, Logger logger)
+        {
+            tcpListener = new TcpListener(System.Net.IPAddress.Any, port);
+            this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        }
+
+        /// <summary>
+        /// Starts the server. Should only be called once.
+        /// </summary>
+        /// <exception cref="SocketException"></exception>
         public void Start()
         {
             tcpListener.Start();
             tcpListener.BeginAcceptTcpClient(new AsyncCallback(OnClientConnect), null);
-        }
-
-        private byte? GetNextUserID()
-        {
-            for (byte i = 1; i < byte.MaxValue; i++)
-            {
-                if (!clients.ContainsKey(i))
-                {
-                    return i;
-                }
-            }
-
-            return null;
-        }
-
-        private long GetUnixTime() => DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
-
-        private void OnClientConnect(IAsyncResult ar)
-        {
-            // Begin listening for next.
-            tcpListener.BeginAcceptTcpClient(new AsyncCallback(OnClientConnect), null);
-
-            // Begin handling the connecting client.
-            TcpClient client = tcpListener.EndAcceptTcpClient(ar);
-            NetworkStream stream = client.GetStream();
-
-            // If lobby is full, turn away client.
-            if (!(GetNextUserID() is byte userID))
-            {
-                client.Close();
-                Console.WriteLine("Lobby full");
-                return;
-            }
-
-            // Assign client their ID
-            stream.Write(new SendUserIDPacket(userID).Serialize());
-
-            ClientInfo clientInfo = new ClientInfo(client, GetUnixTime());
-            clients.Add(userID, clientInfo);
-
-            Console.WriteLine($"{client.Client.RemoteEndPoint} connected: ID {userID}");
         }
 
         public void Update()
@@ -76,13 +58,13 @@ namespace ChatroomServer
                 long timeDifference = GetUnixTime() - client.Value.LastActiveTime;
                 if (timeDifference <= MaxMillisecondsSinceLastActive)
                 {
-                    //Console.WriteLine($"Client: {timeDifference} ms since last message");
+                    logger?.Debug($"Client: {timeDifference} ms since last message");
                     continue;
                 }
 
                 if (client.Value.Name is null)
                 {
-                    Console.WriteLine("Client timed out: " + client.Key);
+                    logger?.Info("Client timed out: " + client.Key);
                     DisconnectClient(client.Key);
                     continue;
                 }
@@ -113,19 +95,20 @@ namespace ChatroomServer
 
                         if (client.Value.Name is null)
                         {
-                            foreach (var c in clients)
+                            foreach (KeyValuePair<byte, ClientInfo> otherClientPair in clients)
                             {
-                                if (c.Value.Name is null)
-                                {
-                                    continue;
-                                }
+                                byte otherClientID = otherClientPair.Key;
 
-                                byte[] packetBytes = new SendUserInfoPacket(c.Key, c.Value.Name).Serialize();
-                                stream.Write(packetBytes, 0, packetBytes.Length);
+                                // Name may be null.
+                                if (otherClientPair.Value.Name is string otherClientName)
+                                {
+                                    byte[] packetBytes = new SendUserInfoPacket(otherClientID, otherClientName).Serialize();
+                                    stream.Write(packetBytes, 0, packetBytes.Length);
+                                }
                             }
                         }
 
-                        Console.WriteLine("User connected: " + changeNamePacket.Name);
+                        logger?.Info("User connected: " + changeNamePacket.Name);
 
                         SendPacketAll(new LogMessagePacket(GetUnixTime(), $"{changeNamePacket.Name} has connected").Serialize());
 
@@ -139,7 +122,7 @@ namespace ChatroomServer
 
                         var responsePacket = new ReceiveMessagePacket(client.Key, sendMessagePacket.TargetUserID, GetUnixTime(), sendMessagePacket.Message).Serialize();
 
-                        Console.WriteLine($"Message received");
+                        logger?.Debug($"Message received");
 
                         if (sendMessagePacket.TargetUserID == 0)
                         {
@@ -153,7 +136,7 @@ namespace ChatroomServer
 
                         break;
                     case ClientPacketType.Disconnect:
-                        Console.WriteLine($"Client: {client.Value.Name} has disconnected");
+                        logger?.Info($"Client: {client.Value.Name} has disconnected");
                         SendPacketAll(new LogMessagePacket(GetUnixTime(), $"{client.Value.Name} has disconnected").Serialize());
                         DisconnectClient(client.Key);
                         break;
@@ -163,9 +146,50 @@ namespace ChatroomServer
             }
         }
 
+        private byte? GetNextUserID()
+        {
+            for (byte i = 1; i < byte.MaxValue; i++)
+            {
+                if (!clients.ContainsKey(i))
+                {
+                    return i;
+                }
+            }
+
+            return null;
+        }
+
+        private long GetUnixTime() => DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+
+        private void OnClientConnect(IAsyncResult ar)
+        {
+            // Begin listening for next.
+            tcpListener.BeginAcceptTcpClient(new AsyncCallback(OnClientConnect), null);
+
+            // Begin handling the connecting client.
+            TcpClient client = tcpListener.EndAcceptTcpClient(ar);
+            NetworkStream stream = client.GetStream();
+
+            // If lobby is full, turn away client.
+            if (!(GetNextUserID() is byte userID))
+            {
+                client.Close();
+                logger?.Warning("Lobby full");
+                return;
+            }
+
+            // Assign client their ID
+            stream.Write(new SendUserIDPacket(userID).Serialize());
+
+            ClientInfo clientInfo = new ClientInfo(client, GetUnixTime());
+            clients.Add(userID, clientInfo);
+
+            logger?.Info($"{client.Client.RemoteEndPoint} connected: ID {userID}");
+        }
+
         private void DisconnectClient(byte userID)
         {
-            Console.WriteLine($"Disconnected ID: {userID}");
+            logger?.Info($"Disconnected ID: {userID}");
 
             clients[userID].TcpClient?.Close();
 
@@ -213,6 +237,14 @@ namespace ChatroomServer
                 }
 
                 SendPacket(client.Key, client.Value, data);
+            }
+        }
+
+        public void Dispose()
+        {
+            foreach (var item in clients)
+            {
+                item.Value.TcpClient?.Dispose();
             }
         }
     }
