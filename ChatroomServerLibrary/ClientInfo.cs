@@ -11,7 +11,7 @@ namespace ChatroomServer
         /// <summary>
         /// The <c>TcpClient</c> belonging to a given client.
         /// </summary>
-        public TcpClient TcpClient;
+        public readonly TcpClient TcpClient;
 
         /// <summary>
         /// Keeps track of when something was sent to the client, or recieved from the client.

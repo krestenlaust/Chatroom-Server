@@ -3,6 +3,7 @@
   <PropertyGroup>
     <TargetFramework>netstandard2.1</TargetFramework>
     <RootNamespace>ChatroomServer</RootNamespace>
+    <AssemblyName>ChatroomServerLibrary</AssemblyName>
   </PropertyGroup>
 
   <ItemGroup>

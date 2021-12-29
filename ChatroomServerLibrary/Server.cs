@@ -14,41 +14,58 @@ namespace ChatroomServer
     /// </summary>
     public class Server : IDisposable
     {
-        private const int MaxMillisecondsSinceLastActive = 1000000;
+        public Logger? Logger;
         private readonly Dictionary<byte, ClientInfo> clients = new Dictionary<byte, ClientInfo>();
         private readonly TcpListener tcpListener;
-        private Logger? logger;
+        private readonly ServerConfig config;
+        private readonly Queue<(string Name, ReceiveMessagePacket StoredMessage)> recallableMessages;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="Server"/> class.
         /// </summary>
         /// <param name="port">The port on which to start the server.</param>
-        public Server(short port)
+        /// <param name="config">The configuration of the server.</param>
+        public Server(short port, ServerConfig config)
         {
             tcpListener = new TcpListener(System.Net.IPAddress.Any, port);
+            this.config = config;
         }
 
         /// <summary>
         /// Initializes a new instance of the <see cref="Server"/> class.
         /// </summary>
         /// <param name="port">The port on which to start the server.</param>
+        /// <param name="config">The configuration of the server.</param>
         /// <param name="logger">The logger with which to log information.</param>
-        public Server(short port, Logger logger)
+        public Server(short port, ServerConfig config, Logger logger)
         {
             tcpListener = new TcpListener(System.Net.IPAddress.Any, port);
-            this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            this.Logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            this.config = config;
         }
 
         /// <summary>
         /// Starts the server. Should only be called once.
         /// </summary>
-        /// <exception cref="SocketException"></exception>
+        /// <exception cref="SocketException">Port unavailable, or otherwise.</exception>
         public void Start()
         {
             tcpListener.Start();
             tcpListener.BeginAcceptTcpClient(new AsyncCallback(OnClientConnect), null);
         }
 
+        public void Dispose()
+        {
+            foreach (var item in clients)
+            {
+                item.Value.TcpClient?.Dispose();
+            }
+        }
+
+        /// <summary>
+        /// Reads available data from clients, and responds accordingly.
+        /// Should be called repeatedly.
+        /// </summary>
         public void Update()
         {
             // Pings clients
@@ -56,15 +73,15 @@ namespace ChatroomServer
             {
                 // Ping client if more time than whats good, has passed.
                 long timeDifference = GetUnixTime() - client.Value.LastActiveTime;
-                if (timeDifference <= MaxMillisecondsSinceLastActive)
+                if (timeDifference <= config.MaxTimeSinceLastActive)
                 {
-                    logger?.Debug($"Client: {timeDifference} ms since last message");
+                    Logger?.Debug($"Client: {timeDifference} ms since last message");
                     continue;
                 }
 
                 if (client.Value.Name is null)
                 {
-                    logger?.Info("Client timed out: " + client.Key);
+                    Logger?.Info("Client timed out: " + client.Key);
                     DisconnectClient(client.Key);
                     continue;
                 }
@@ -93,22 +110,13 @@ namespace ChatroomServer
                     case ClientPacketType.ChangeName:
                         var changeNamePacket = new ChangeNamePacket(stream);
 
+                        // First time connecting
                         if (client.Value.Name is null)
                         {
-                            foreach (KeyValuePair<byte, ClientInfo> otherClientPair in clients)
-                            {
-                                byte otherClientID = otherClientPair.Key;
-
-                                // Name may be null.
-                                if (otherClientPair.Value.Name is string otherClientName)
-                                {
-                                    byte[] packetBytes = new SendUserInfoPacket(otherClientID, otherClientName).Serialize();
-                                    stream.Write(packetBytes, 0, packetBytes.Length);
-                                }
-                            }
+                            IntroduceClient(client.Key, client.Value);
                         }
 
-                        logger?.Info("User connected: " + changeNamePacket.Name);
+                        Logger?.Info("User connected: " + changeNamePacket.Name);
 
                         SendPacketAll(new LogMessagePacket(GetUnixTime(), $"{changeNamePacket.Name} has connected").Serialize());
 
@@ -120,29 +128,87 @@ namespace ChatroomServer
                     case ClientPacketType.SendMessage:
                         var sendMessagePacket = new SendMessagePacket(stream);
 
-                        var responsePacket = new ReceiveMessagePacket(client.Key, sendMessagePacket.TargetUserID, GetUnixTime(), sendMessagePacket.Message).Serialize();
+                        // Ignore packet if client handshake hasn't finished.
+                        if (client.Value.Name is null)
+                        {
+                            break;
+                        }
 
-                        logger?.Debug($"Message received");
+                        var responsePacket = new ReceiveMessagePacket(client.Key, sendMessagePacket.TargetUserID, GetUnixTime(), sendMessagePacket.Message);
+
+                        Logger?.Debug($"Message received");
 
                         if (sendMessagePacket.TargetUserID == 0)
                         {
-                            SendPacketAll(responsePacket);
+                            recallableMessages.Enqueue((client.Value.Name, responsePacket));
+
+                            // Shorten recallable message queue to configuration
+                            while (recallableMessages.Count > config.MaxStoredMessages)
+                            {
+                                recallableMessages.Dequeue();
+                            }
+
+                            SendPacketAll(responsePacket.Serialize());
                         }
                         else
                         {
-                            SendPacket(sendMessagePacket.TargetUserID, clients[sendMessagePacket.TargetUserID], responsePacket);
-                            SendPacket(client.Key, client.Value, responsePacket);
+                            SendPacket(sendMessagePacket.TargetUserID, clients[sendMessagePacket.TargetUserID], responsePacket.Serialize());
+                            SendPacket(client.Key, client.Value, responsePacket.Serialize());
                         }
 
                         break;
                     case ClientPacketType.Disconnect:
-                        logger?.Info($"Client: {client.Value.Name} has disconnected");
+                        Logger?.Info($"Client: {client.Value.Name} has disconnected");
                         SendPacketAll(new LogMessagePacket(GetUnixTime(), $"{client.Value.Name} has disconnected").Serialize());
                         DisconnectClient(client.Key);
                         break;
                     default:
                         break;
                 }
+            }
+        }
+
+        private void IntroduceClient(byte id, ClientInfo client)
+        {
+            // Clone queue
+            var messagesToRecall = new Queue<(string Name, ReceiveMessagePacket)>(recallableMessages);
+
+            // Tuples .GetHashcode combines its element's hashcodes.
+            HashSet<(byte, string)> updatedUserinfo = new HashSet<(byte, string)>();
+
+            while (messagesToRecall.Count > 0)
+            {
+                (string authorname, ReceiveMessagePacket packet) = messagesToRecall.Dequeue();
+
+                if (updatedUserinfo.Add((packet.UserID, authorname)))
+                {
+                    // Send UpdateUserInfo
+                    SendPacket(id, client, new SendUserInfoPacket(packet.UserID, authorname).Serialize());
+                }
+
+                SendPacket(id, client, packet.Serialize());
+            }
+
+            // Send user ID's
+            foreach (KeyValuePair<byte, ClientInfo> otherClientPair in clients)
+            {
+                byte otherClientID = otherClientPair.Key;
+
+                string? otherClientName = otherClientPair.Value.Name;
+
+                // A client that is just connecting.
+                if (otherClientName is null)
+                {
+                    continue;
+                }
+
+                // Client name has already been sent.
+                if (updatedUserinfo.Contains((otherClientID, otherClientName)))
+                {
+                    continue;
+                }
+
+                SendPacket(id, client, new SendUserInfoPacket(otherClientID, otherClientName).Serialize());
             }
         }
 
@@ -174,7 +240,7 @@ namespace ChatroomServer
             if (!(GetNextUserID() is byte userID))
             {
                 client.Close();
-                logger?.Warning("Lobby full");
+                Logger?.Warning("Lobby full");
                 return;
             }
 
@@ -184,12 +250,12 @@ namespace ChatroomServer
             ClientInfo clientInfo = new ClientInfo(client, GetUnixTime());
             clients.Add(userID, clientInfo);
 
-            logger?.Info($"{client.Client.RemoteEndPoint} connected: ID {userID}");
+            Logger?.Info($"{client.Client.RemoteEndPoint} connected: ID {userID}");
         }
 
         private void DisconnectClient(byte userID)
         {
-            logger?.Info($"Disconnected ID: {userID}");
+            Logger?.Info($"Disconnected ID: {userID}");
 
             clients[userID].TcpClient?.Close();
 
@@ -200,12 +266,6 @@ namespace ChatroomServer
             SendPacketAll(new UserLeftPacket(userID).Serialize(), userID);
         }
 
-        /// <summary>
-        /// Returns whether the client is still connected.
-        /// </summary>
-        /// <param name="client"></param>
-        /// <param name="data"></param>
-        /// <returns></returns>
         private void SendPacket(byte userID, ClientInfo client, byte[] data)
         {
             client.LastActiveTime = GetUnixTime();
@@ -237,14 +297,6 @@ namespace ChatroomServer
                 }
 
                 SendPacket(client.Key, client.Value, data);
-            }
-        }
-
-        public void Dispose()
-        {
-            foreach (var item in clients)
-            {
-                item.Value.TcpClient?.Dispose();
             }
         }
     }

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
+#nullable enable
 namespace ChatroomServer
 {
     /// <summary>
@@ -23,6 +24,8 @@ namespace ChatroomServer
         /// Gets or sets the type of the packet.
         /// </summary>
         protected ServerPacketType PacketType { get; set; }
+
+        protected byte[]? serializedData = null;
 
         /// <summary>
         /// Serializes the packet.

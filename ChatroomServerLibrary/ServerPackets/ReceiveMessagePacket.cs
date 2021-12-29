@@ -28,8 +28,14 @@ namespace ChatroomServer.Packets
             Message = message;
         }
 
+        /// <inheritdoc/>
         public override byte[] Serialize()
         {
+            if (!(serializedData is null))
+            {
+                return serializedData;
+            }
+
             PacketBuilder builder = new PacketBuilder(
                 sizeof(ServerPacketType) +
                 sizeof(byte) +
@@ -49,6 +55,7 @@ namespace ChatroomServer.Packets
             builder.AddUInt16((ushort)Encoding.UTF8.GetByteCount(Message));
             builder.AddStringUTF8(Message);
 
+            serializedData = builder.Data;
             return builder.Data;
         }
     }
