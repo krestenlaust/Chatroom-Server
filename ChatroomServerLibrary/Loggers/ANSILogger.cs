@@ -3,6 +3,9 @@ using System.Text;
 
 namespace ChatroomServer.Loggers
 {
+    /// <summary>
+    /// Colored logs using ANSI coloring.
+    /// </summary>
     public class ANSILogger : Logger
     {
         /// <inheritdoc/>
@@ -29,6 +32,9 @@ namespace ChatroomServer.Loggers
 
             outputSb.Append(' ');
             outputSb.Append(msg);
+
+            // Turn to white again.
+            outputSb.Append("\033[0;37m");
 
             Console.WriteLine(outputSb.ToString());
         }

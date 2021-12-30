@@ -27,7 +27,12 @@ namespace ChatroomServerCLI
 
             Console.WriteLine($"Logging with verbosity level: {Enum.GetName(typeof(LogType), serverLogger.LogLevel)}");
 
-            using Server server = new Server(serverPort, ServerConfig.Default, serverLogger);
+            ServerConfig selectedConfig = ServerConfig.Default;
+#if DEBUG
+            selectedConfig = new ServerConfig(99999, 10);
+#endif
+
+            using Server server = new Server(serverPort, selectedConfig, serverLogger);
             server.Start();
             Console.WriteLine($"Listening on {LocalIP}:{serverPort}");
 

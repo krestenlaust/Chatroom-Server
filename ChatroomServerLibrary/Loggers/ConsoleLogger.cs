@@ -11,15 +11,6 @@ namespace ChatroomServer.Loggers
         /// <inheritdoc/>
         protected override void Output(string msg, LogType logType)
         {
-            Console.ForegroundColor = logType switch
-            {
-                LogType.Debug => ConsoleColor.White,
-                LogType.Info => ConsoleColor.White,
-                LogType.Warning => ConsoleColor.DarkYellow,
-                LogType.Error => ConsoleColor.Red,
-                _ => throw new NotImplementedException(),
-            };
-
             StringBuilder outputSb = new StringBuilder();
 
             outputSb.Append('[');
@@ -33,7 +24,19 @@ namespace ChatroomServer.Loggers
             outputSb.Append(' ');
             outputSb.Append(msg);
 
+            ConsoleColor currentColor = Console.ForegroundColor;
+            Console.ForegroundColor = logType switch
+            {
+                LogType.Debug => ConsoleColor.White,
+                LogType.Info => ConsoleColor.White,
+                LogType.Warning => ConsoleColor.DarkYellow,
+                LogType.Error => ConsoleColor.Red,
+                _ => throw new NotImplementedException(),
+            };
+
             Console.WriteLine(outputSb.ToString());
+            Console.ForegroundColor = currentColor;
+
         }
     }
 }
