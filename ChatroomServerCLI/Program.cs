@@ -11,6 +11,23 @@ namespace ChatroomServerCLI
 {
     internal class Program
     {
+        private static string LocalIP
+        {
+            get
+            {
+                IPAddress[] addresses = Dns.GetHostAddresses(Dns.GetHostName());
+                foreach (IPAddress address in addresses)
+                {
+                    if (address.AddressFamily == AddressFamily.InterNetwork)
+                    {
+                        return address.ToString();
+                    }
+                }
+
+                return "0.0.0.0";
+            }
+        }
+
         private static void Main(string[] args)
         {
             const short serverPort = 25565;
@@ -56,23 +73,6 @@ namespace ChatroomServerCLI
             {
                 serverLogger.Error($"Exception occured: {ex}");
                 throw;
-            }
-        }
-
-        private static string LocalIP
-        {
-            get
-            {
-                IPAddress[] addresses = Dns.GetHostAddresses(Dns.GetHostName());
-                foreach (IPAddress address in addresses)
-                {
-                    if (address.AddressFamily == AddressFamily.InterNetwork)
-                    {
-                        return address.ToString();
-                    }
-                }
-
-                return "0.0.0.0";
             }
         }
     }
