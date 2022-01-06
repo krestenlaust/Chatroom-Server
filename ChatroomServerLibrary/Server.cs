@@ -211,8 +211,15 @@ namespace ChatroomServer
                     }
                     else
                     {
-                        SendPacket(sendMessagePacket.TargetUserID, clients[sendMessagePacket.TargetUserID], responsePacket.Serialize());
                         SendPacket(clientID, client, responsePacket.Serialize());
+
+                        if (!clients.TryGetValue(sendMessagePacket.TargetUserID, out ClientInfo targetClient))
+                        {
+                            Logger?.Warning("Target user ID not found: " + sendMessagePacket.TargetUserID);
+                            break;
+                        }
+
+                        SendPacket(sendMessagePacket.TargetUserID, targetClient, responsePacket.Serialize());
                     }
 
                     break;

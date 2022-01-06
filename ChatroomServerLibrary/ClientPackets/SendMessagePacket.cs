@@ -8,6 +8,7 @@ namespace ChatroomServer.ClientPackets
     public class SendMessagePacket : ClientPacket
     {
         public byte TargetUserID { get; private set; }
+
         public string Message { get; private set; }
 
         public SendMessagePacket(NetworkStream stream) : base(stream)
@@ -24,7 +25,7 @@ namespace ChatroomServer.ClientPackets
 
             if (length == 0)
             {
-                Message = "";
+                Message = string.Empty;
                 return;
             }
 
