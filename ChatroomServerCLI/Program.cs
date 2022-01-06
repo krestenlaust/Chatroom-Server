@@ -27,7 +27,7 @@ namespace ChatroomServerCLI
                 return "0.0.0.0";
             }
         }
-        // note to self: Stop med at spille julemusik after the 6th of January
+
         private static void Main(string[] args)
         {
             const short serverPort = 25565;

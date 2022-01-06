@@ -16,11 +16,14 @@ namespace ChatroomServer
     public class Server : IDisposable
     {
         public Logger? Logger;
+        private readonly HashSet<string> usedNames = new HashSet<string>();
         private readonly Dictionary<byte, ClientInfo> clients = new Dictionary<byte, ClientInfo>();
         private readonly Dictionary<byte, TcpClient> newClients = new Dictionary<byte, TcpClient>();
         private readonly TcpListener tcpListener;
         private readonly ServerConfig config;
         private readonly Queue<(string Name, ReceiveMessagePacket StoredMessage)> recallableMessages = new Queue<(string Name, ReceiveMessagePacket StoredMessage)>();
+
+        private byte recentID = 1;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="Server"/> class.
@@ -147,6 +150,32 @@ namespace ChatroomServer
             }
         }
 
+        private bool IsNameValid(string name)
+        {
+            // TODO: Check length.
+            // TODO: Check for invalid characters.
+
+            // Is name taken
+            if (usedNames.Contains(name))
+            {
+                return false;
+            }
+
+            return true;
+        }
+
+        private string FixName(string name)
+        {
+            string newName = name;
+            int nextIndex = 2;
+            while (!IsNameValid(newName))
+            {
+                newName = $"{name} ({nextIndex++})";
+            }
+
+            return newName;
+        }
+
         /// <summary>
         /// Handles incoming packet.
         /// </summary>
@@ -154,7 +183,6 @@ namespace ChatroomServer
         /// <param name="packetType"></param>
         /// <param name="clientID"></param>
         /// <param name="client"></param>
-        /// <exception cref="SocketException"></exception>
         private void HandlePacket(NetworkStream stream, ClientPacketType packetType, byte clientID, ClientInfo client)
         {
             // Parse and handle the packets ChangeNamePacket and SendMessagePacket,
@@ -164,21 +192,22 @@ namespace ChatroomServer
                 case ClientPacketType.ChangeName:
                     var changeNamePacket = new ChangeNamePacket(stream);
 
-                    // First time connecting
-                    if (client.Name is null)
-                    {
-                        IntroduceClient(clientID, client);
+                    string? oldName = client.Name;
+                    client.Name = FixName(changeNamePacket.Name);
+                    usedNames.Add(client.Name);
 
-                        Logger?.Info("User connected: " + changeNamePacket.Name);
-                        ServerLogAll($"{changeNamePacket.Name} has connected");
+                    // First time connecting
+                    if (oldName is null)
+                    {
+                        IntroduceClientToContext(clientID, client);
+
+                        Logger?.Info("User connected: " + client.Name);
+                        ServerLogAll($"{client.Name} forbandt!");
                     }
                     else
                     {
                         Logger?.Info($"User {clientID} name updated from {client.Name} to {changeNamePacket.Name}");
                     }
-
-                    // Change the name of the client
-                    client.Name = changeNamePacket.Name;
 
                     SendPacketAll(new SendUserInfoPacket(clientID, client.Name).Serialize());
                     break;
@@ -191,8 +220,11 @@ namespace ChatroomServer
                         break;
                     }
 
-                    ReceiveMessagePacket responsePacket;
-                    responsePacket = new ReceiveMessagePacket(clientID, sendMessagePacket.TargetUserID, GetUnixTime(), sendMessagePacket.Message);
+                    ReceiveMessagePacket responsePacket = new ReceiveMessagePacket(
+                        clientID,
+                        sendMessagePacket.TargetUserID,
+                        GetUnixTime(),
+                        sendMessagePacket.Message);
 
                     // Debug display chatmessage.
                     if (!(Logger is null))
@@ -230,7 +262,7 @@ namespace ChatroomServer
                 case ClientPacketType.Disconnect:
                     Logger?.Info($"Client: {client.Name} has disconnected");
 
-                    ServerLogAll($"{client.Name} has disconnected");
+                    ServerLogAll($"{client.Name} smuttede igen!");
                     DisconnectClient(clientID);
                     break;
                 default:
@@ -266,9 +298,9 @@ namespace ChatroomServer
             Logger?.Info(outputMsg.ToString());
         }
 
-        private void IntroduceClient(byte clientID, ClientInfo client)
+        private void IntroduceClientToContext(byte clientID, ClientInfo client)
         {
-            // Clone queue
+            // Recall messages
             var messagesToRecall = new Queue<(string Name, ReceiveMessagePacket)>(recallableMessages);
 
             // Tuples .GetHashcode combines its element's hashcodes.
@@ -287,7 +319,7 @@ namespace ChatroomServer
                 SendPacket(clientID, client, packet.Serialize());
             }
 
-            // Send user ID's
+            // Send current user information
             foreach (KeyValuePair<byte, ClientInfo> otherClientPair in clients)
             {
                 byte otherClientID = otherClientPair.Key;
@@ -308,8 +340,6 @@ namespace ChatroomServer
                 SendPacket(clientID, client, new SendUserInfoPacket(otherClientID, otherClientName).Serialize());
             }
         }
-
-        private byte recentID = 1;
 
         private byte? GetNextUserID()
         {
@@ -371,6 +401,11 @@ namespace ChatroomServer
             {
                 Logger?.Warning($"Trying to disconnect removed client: {userID}");
                 return;
+            }
+
+            if (!(clientInfo.Name is null))
+            {
+                usedNames.Remove(clientInfo.Name);
             }
 
             // Clients kan modificeres da den formegentlig er på den rigtige tråd.
