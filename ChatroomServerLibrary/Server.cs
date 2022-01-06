@@ -363,11 +363,14 @@ namespace ChatroomServer
         {
             Logger?.Info($"Disconnected ID: {userID}");
 
-            // Clients kan modificeres da den formegentlig er på den rigtige tråd.
-            clients[userID].TcpClient?.Close();
+            if (!clients.TryGetValue(userID, out ClientInfo clientInfo))
+            {
+                // Clients kan modificeres da den formegentlig er på den rigtige tråd.
+                clientInfo.TcpClient?.Close();
 
-            // Remove client.
-            clients.Remove(userID);
+                // Remove client.
+                clients.Remove(userID);
+            }
 
             // Send UserLeftPacket to all clients iteratively.
             SendPacketAll(new UserLeftPacket(userID).Serialize(), userID);

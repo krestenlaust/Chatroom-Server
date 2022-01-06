@@ -27,7 +27,7 @@ namespace ChatroomServerCLI
                 return "0.0.0.0";
             }
         }
-
+        // note to self: Stop med at spille julemusik after the 6th of January
         private static void Main(string[] args)
         {
             const short serverPort = 25565;
@@ -35,7 +35,8 @@ namespace ChatroomServerCLI
             Logger serverLogger;
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
             {
-                serverLogger = new ANSILogger();
+                serverLogger = new ConsoleLogger();
+                // serverLogger = new ANSILogger();
             }
             else
             {
