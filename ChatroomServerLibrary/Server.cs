@@ -130,9 +130,14 @@ namespace ChatroomServer
 
                     HandlePacket(stream, packetType, client.Key, client.Value);
                 }
+                catch (InvalidOperationException ex)
+                {
+                    Logger?.Warning($"Client disconnect by invalid operation: {ex}");
+                    DisconnectClient(client.Key);
+                }
                 catch (SocketException ex)
                 {
-                    Logger?.Debug($"Client disconnected by SocketException: {ex}");
+                    Logger?.Debug($"Client disconnected by Socket exception: {ex}");
                     DisconnectClient(client.Key);
                 }
                 catch (Exception ex)
