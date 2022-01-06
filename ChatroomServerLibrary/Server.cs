@@ -88,7 +88,6 @@ namespace ChatroomServer
                 long timeDifference = GetUnixTime() - client.Value.LastActiveTime;
                 if (timeDifference <= config.MaxTimeSinceLastActive)
                 {
-                    Logger?.Debug($"Client: {timeDifference} ms since last message");
                     continue;
                 }
 
@@ -361,7 +360,7 @@ namespace ChatroomServer
 
             newClients.Add(userID, client);
 
-            Logger?.Info($"{client.Client.RemoteEndPoint} connected:- ID {userID}");
+            Logger?.Info($"{client.Client.RemoteEndPoint} connected: ID {userID}");
         }
 
         private void DisconnectClient(byte userID)
@@ -370,12 +369,15 @@ namespace ChatroomServer
 
             if (!clients.TryGetValue(userID, out ClientInfo clientInfo))
             {
-                // Clients kan modificeres da den formegentlig er på den rigtige tråd.
-                clientInfo.TcpClient?.Close();
-
-                // Remove client.
-                clients.Remove(userID);
+                Logger?.Warning($"Trying to disconnect removed client: {userID}");
+                return;
             }
+
+            // Clients kan modificeres da den formegentlig er på den rigtige tråd.
+            clientInfo.TcpClient?.Close();
+
+            // Remove client.
+            clients.Remove(userID);
 
             // Send UserLeftPacket to all clients iteratively.
             SendPacketAll(new UserLeftPacket(userID).Serialize(), userID);
