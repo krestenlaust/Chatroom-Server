@@ -385,7 +385,7 @@ namespace ChatroomServer
                 NetworkStream stream = client.TcpClient.GetStream();
                 stream.Write(data, 0, data.Length);
             }
-            catch (IOException)
+            catch (Exception ex) when (ex is IOException || ex is InvalidOperationException)
             {
                 // Disconnect client because it isn't connected.
                 DisconnectClient(userID);
