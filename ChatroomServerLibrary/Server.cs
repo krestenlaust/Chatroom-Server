@@ -229,7 +229,7 @@ namespace ChatroomServer
                     }
                     else
                     {
-                        Logger?.Info($"User {clientID} name updated from {client.Name} to {changeNamePacket.Name}");
+                        Logger?.Info($"User {clientID} name updated from {oldName} to {changeNamePacket.Name}");
                     }
 
                     SendPacketAll(new SendUserInfoPacket(clientID, client.Name).Serialize());
@@ -342,7 +342,19 @@ namespace ChatroomServer
                 SendPacket(clientID, client, packet.Serialize());
             }
 
-            // Send current user information
+            // Disconnect old people
+            foreach ((byte, string) item in updatedUserinfo)
+            {
+                // Only disconnect people not present anymore.
+                if (clients.ContainsKey(item.Item1))
+                {
+                    continue;
+                }
+
+                SendPacket(clientID, client, new UserLeftPacket(item.Item1).Serialize());
+            }
+
+            // Send missing current user information
             foreach (KeyValuePair<byte, ClientInfo> otherClientPair in clients)
             {
                 byte otherClientID = otherClientPair.Key;
