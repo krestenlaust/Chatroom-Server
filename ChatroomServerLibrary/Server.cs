@@ -89,15 +89,23 @@ namespace ChatroomServer
             {
                 // Ping client if more time than whats good, has passed.
                 long timeDifference = GetUnixTime() - client.Value.LastActiveTime;
-                if (timeDifference <= config.MaxTimeSinceLastActive)
+
+                // Client hasn't handshaked yet.
+                if (client.Value.Name is null)
                 {
+                    if (timeDifference <= config.HandshakeTimeout)
+                    {
+                        continue;
+                    }
+
+                    Logger?.Info($"Client handshake timed out: {client.Key}");
+                    DisconnectClient(client.Key);
+
                     continue;
                 }
 
-                if (client.Value.Name is null)
+                if (timeDifference <= config.MaxTimeSinceLastActive)
                 {
-                    Logger?.Info("Client timed out: " + client.Key);
-                    DisconnectClient(client.Key);
                     continue;
                 }
 

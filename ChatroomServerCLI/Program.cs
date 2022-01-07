@@ -47,7 +47,7 @@ namespace ChatroomServerCLI
 
             ServerConfig selectedConfig = ServerConfig.Default;
 #if DEBUG
-            selectedConfig = new ServerConfig(99999, 10);
+            selectedConfig = new ServerConfig(99999, 1000, 10);
 #endif
 
             using Server server = new Server(serverPort, selectedConfig, serverLogger);
