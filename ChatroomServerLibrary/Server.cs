@@ -235,7 +235,8 @@ namespace ChatroomServer
                     }
                     else
                     {
-                        Logger?.Info($"User {clientID} name updated from {oldName} to {changeNamePacket.Name}");
+                        Logger?.Info($"User {clientID} name updated from {oldName} to {client.Name}");
+                        ServerLogAll($"{oldName} skiftede navn til {client.Name}");
                     }
 
                     SendPacketAll(new SendUserInfoPacket(clientID, client.Name).Serialize());
@@ -291,7 +292,7 @@ namespace ChatroomServer
                 case ClientPacketType.Disconnect:
                     Logger?.Info($"Client: {client.Name} has disconnected");
 
-                    ServerLogAll($"{client.Name} smuttede igen!");
+                    ServerLogAll($"{client.Name} forsvandt!");
                     DisconnectClient(clientID);
                     break;
                 default:
