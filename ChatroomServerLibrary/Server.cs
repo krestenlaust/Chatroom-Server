@@ -216,6 +216,12 @@ namespace ChatroomServer
                     var changeNamePacket = new ChangeNamePacket(stream);
 
                     string? oldName = client.Name;
+
+                    if (!(oldName is null))
+                    {
+                        usedNames.Remove(oldName);
+                    }
+
                     client.Name = FixName(changeNamePacket.Name);
                     usedNames.Add(client.Name);
 
@@ -426,6 +432,7 @@ namespace ChatroomServer
         private void SendPacket(byte userID, ClientInfo client, byte[] data)
         {
             client.LastActiveTime = GetUnixTime();
+            Logger?.Debug("Sender pakke: " + Enum.GetName(typeof(ServerPacketType), (ServerPacketType)data[0]));
 
             try
             {
