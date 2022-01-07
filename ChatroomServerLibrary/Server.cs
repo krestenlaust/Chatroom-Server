@@ -432,7 +432,10 @@ namespace ChatroomServer
         private void SendPacket(byte userID, ClientInfo client, byte[] data)
         {
             client.LastActiveTime = GetUnixTime();
-            Logger?.Debug("Sender pakke: " + Enum.GetName(typeof(ServerPacketType), (ServerPacketType)data[0]));
+            if (data[0] != 1)
+            {
+                Logger?.Debug("Sender pakke: " + Enum.GetName(typeof(ServerPacketType), (ServerPacketType)data[0]));
+            }
 
             try
             {
