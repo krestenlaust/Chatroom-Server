@@ -56,7 +56,6 @@ namespace ChatroomServer
         public void Start()
         {
             tcpListener.Start();
-            tcpListener.BeginAcceptTcpClient(new AsyncCallback(OnClientConnect), null);
         }
 
         /// <inheritdoc/>
@@ -74,12 +73,28 @@ namespace ChatroomServer
         /// </summary>
         public void Update()
         {
-            // Add new clients
-            foreach (var newClient in newClients)
+            // Check pending clients
+            while (tcpListener.Pending())
             {
-                ClientInfo newClientInfo = new ClientInfo(newClient.Value, GetUnixTime());
+                // Accept pending client.
+                TcpClient client = tcpListener.AcceptTcpClient();
+                NetworkStream stream = client.GetStream();
 
-                clients.Add(newClient.Key, newClientInfo);
+                // If lobby is full, turn away client.
+                if (!(GetNextUserID() is byte userID))
+                {
+                    client.Close();
+                    Logger?.Warning("Lobby full");
+                    return;
+                }
+
+                // Assign client their ID
+                stream.Write(new SendUserIDPacket(userID).Serialize());
+
+                ClientInfo clientInfo = new ClientInfo(client, GetUnixTime());
+                clients.Add(userID, clientInfo);
+
+                Logger?.Info($"{client.Client.RemoteEndPoint} connected: ID {userID}");
             }
 
             newClients.Clear();
@@ -372,35 +387,6 @@ namespace ChatroomServer
 
         private long GetUnixTime() => DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
 
-        /// <summary>
-        /// På en anden tråd, pas på kald i denne metode.
-        /// </summary>
-        /// <param name="ar"></param>
-        private void OnClientConnect(IAsyncResult ar)
-        {
-            // Begin listening for next.
-            tcpListener.BeginAcceptTcpClient(new AsyncCallback(OnClientConnect), null);
-
-            // Begin handling the connecting client.
-            TcpClient client = tcpListener.EndAcceptTcpClient(ar);
-            NetworkStream stream = client.GetStream();
-
-            // If lobby is full, turn away client.
-            if (!(GetNextUserID() is byte userID))
-            {
-                client.Close();
-                Logger?.Warning("Lobby full");
-                return;
-            }
-
-            // Assign client their ID
-            stream.Write(new SendUserIDPacket(userID).Serialize());
-
-            newClients.Add(userID, client);
-
-            Logger?.Info($"{client.Client.RemoteEndPoint} connected: ID {userID}");
-        }
-
         private void DisconnectClient(byte userID)
         {
             Logger?.Info($"Disconnected ID: {userID}");
@@ -416,7 +402,6 @@ namespace ChatroomServer
                 usedNames.Remove(clientInfo.Name);
             }
 
-            // Clients kan modificeres da den formegentlig er på den rigtige tråd.
             clientInfo.TcpClient?.Close();
 
             // Remove client.
