@@ -28,9 +28,20 @@ namespace ChatroomServerCLI
             }
         }
 
+        private const short DefaultPort = 25565;
+
         private static void Main(string[] args)
         {
-            const short serverPort = 25565;
+            short serverPort;
+            string environmentPort = Environment.GetEnvironmentVariable("PORT");
+            if (environmentPort is null)
+            {
+                serverPort = DefaultPort;
+            }
+            else
+            {
+                serverPort = short.Parse(environmentPort);
+            }
 
             Logger serverLogger;
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
