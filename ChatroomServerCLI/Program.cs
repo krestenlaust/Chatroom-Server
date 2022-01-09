@@ -32,7 +32,7 @@ namespace ChatroomServerCLI
 
         private static void Main(string[] args)
         {
-            short serverPort;
+            int serverPort;
             string environmentPort = Environment.GetEnvironmentVariable("PORT");
             if (environmentPort is null)
             {
@@ -40,7 +40,7 @@ namespace ChatroomServerCLI
             }
             else
             {
-                serverPort = short.Parse(environmentPort);
+                serverPort = int.Parse(environmentPort);
             }
 
             Logger serverLogger;

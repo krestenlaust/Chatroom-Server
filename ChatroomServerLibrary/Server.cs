@@ -30,7 +30,7 @@ namespace ChatroomServer
         /// </summary>
         /// <param name="port">The port on which to start the server.</param>
         /// <param name="config">The configuration of the server.</param>
-        public Server(short port, ServerConfig config)
+        public Server(int port, ServerConfig config)
         {
             tcpListener = new TcpListener(System.Net.IPAddress.Any, port);
             this.config = config;
