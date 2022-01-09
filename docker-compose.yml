@@ -1,0 +1,9 @@
+
+version: '3.4'
+
+services:
+  chatroomservercli:
+    image: chatroomservercli
+    build:
+      context: .
+      dockerfile: ChatroomServerCLI/Dockerfile

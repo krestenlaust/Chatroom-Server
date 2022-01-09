@@ -1,0 +1,11 @@
+
+version: '3.4'
+
+services:
+  chatroomservercli:
+    image: chatroomservercli
+    build:
+      context: .
+      dockerfile: ChatroomServerCLI/Dockerfile
+    volumes:
+      - ~/.vsdbg:/remote_debugger:rw
