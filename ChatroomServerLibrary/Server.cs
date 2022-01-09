@@ -42,7 +42,7 @@ namespace ChatroomServer
         /// <param name="port">The port on which to start the server.</param>
         /// <param name="config">The configuration of the server.</param>
         /// <param name="logger">The logger with which to log information.</param>
-        public Server(short port, ServerConfig config, Logger logger)
+        public Server(int port, ServerConfig config, Logger logger)
         {
             tcpListener = new TcpListener(System.Net.IPAddress.Any, port);
             this.Logger = logger ?? throw new ArgumentNullException(nameof(logger));
