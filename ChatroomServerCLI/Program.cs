@@ -56,10 +56,11 @@ namespace ChatroomServerCLI
 
             Console.WriteLine($"Logging with verbosity level: {Enum.GetName(typeof(LogType), serverLogger.LogLevel)}");
 
-            ServerConfig selectedConfig = ServerConfig.Default;
-#if DEBUG
-            selectedConfig = new ServerConfig(99999, 1000, 10);
-#endif
+            ServerConfig selectedConfig = new ServerConfig(
+                maxTimeSinceLastActive: 1000,
+                handshakeTimeout: 1000,
+                maxStoredMessages: 10,
+                messageOfTheDay: "Velkommen til denne Chatrum-protokol(™)-kompatible server (serverplads sponseret af https://LMHVPN.INFO)");
 
             using Server server = new Server(serverPort, selectedConfig, serverLogger);
             server.Start();

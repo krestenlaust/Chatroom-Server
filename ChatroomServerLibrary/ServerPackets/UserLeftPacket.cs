@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-#nullable enable
+﻿#nullable enable
 namespace ChatroomServer.ServerPackets
 {
     public class UserLeftPacket : ServerPacket

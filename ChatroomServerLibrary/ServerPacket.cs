@@ -14,13 +14,8 @@ namespace ChatroomServer
         UserLeft = 11,
     }
 
-    public abstract class ServerPacket
+    public abstract class ServerPacket : Packet<ServerPacketType>
     {
-        /// <summary>
-        /// Gets or sets the type of the packet.
-        /// </summary>
-        protected ServerPacketType PacketType { get; set; }
-
         protected byte[]? serializedData = null;
 
         /// <summary>

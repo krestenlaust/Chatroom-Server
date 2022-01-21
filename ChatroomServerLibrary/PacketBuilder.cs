@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Text;
 
 namespace ChatroomServer
@@ -12,6 +11,9 @@ namespace ChatroomServer
         private readonly byte[] packet;
         private ushort packetCursor;
 
+        /// <summary>
+        /// Gets the prepared data.
+        /// </summary>
         public byte[] Data => packet;
 
         /// <summary>

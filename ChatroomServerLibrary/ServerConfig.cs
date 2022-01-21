@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
+#nullable enable
 namespace ChatroomServer
 {
     /// <summary>
@@ -25,16 +26,23 @@ namespace ChatroomServer
         public readonly int MaxStoredMessages;
 
         /// <summary>
+        /// A message that is sent to a joining user.
+        /// </summary>
+        public readonly string? MessageOfTheDay;
+
+        /// <summary>
         /// Initializes a new instance of the <see cref="ServerConfig"/> struct.
         /// </summary>
         /// <param name="maxTimeSinceLastActive">The timeout duration, before a client is disconnected, specified in milliseconds.</param>
         /// <param name="handshakeTimeout">The duration before a handshake is timed out.</param>
         /// <param name="maxStoredMessages">The highest amount of messages stored to later be recalled when a client connects.</param>
-        public ServerConfig(int maxTimeSinceLastActive, int handshakeTimeout, int maxStoredMessages)
+        /// <param name="messageOfTheDay">The message to send new users. If null, no message is sent.</param>
+        public ServerConfig(int maxTimeSinceLastActive, int handshakeTimeout, int maxStoredMessages, string? messageOfTheDay)
         {
             MaxTimeSinceLastActive = maxTimeSinceLastActive;
             HandshakeTimeout = handshakeTimeout;
             MaxStoredMessages = maxStoredMessages;
+            MessageOfTheDay = messageOfTheDay;
         }
 
         /// <summary>
@@ -46,7 +54,7 @@ namespace ChatroomServer
         public static ServerConfig Default => new ServerConfig(
             maxTimeSinceLastActive: 100,
             handshakeTimeout: 1000,
-            maxStoredMessages: 10
-            );
+            maxStoredMessages: 10,
+            messageOfTheDay: null);
     }
 }

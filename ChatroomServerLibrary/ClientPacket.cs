@@ -7,15 +7,14 @@ namespace ChatroomServer
     /// </summary>
     public enum ClientPacketType : byte
     {
+        Ping = 1,
         SendMessage = 2,
         ChangeName = 4,
         Disconnect = 10,
     }
 
-    public abstract class ClientPacket
+    public abstract class ClientPacket : Packet<ClientPacketType>
     {
-        public ClientPacketType PacketType { get; protected set; }
-
         public ClientPacket(NetworkStream stream)
         {
         }
