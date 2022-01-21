@@ -9,13 +9,15 @@ namespace ChatroomServer
     {
         SendMessage = 2,
         ChangeName = 4,
-        Disconnect = 10
+        Disconnect = 10,
     }
 
     public abstract class ClientPacket
     {
         public ClientPacketType PacketType { get; protected set; }
 
-        public ClientPacket(NetworkStream stream) {}
+        public ClientPacket(NetworkStream stream)
+        {
+        }
     }
 }

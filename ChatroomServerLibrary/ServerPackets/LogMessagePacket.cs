@@ -5,10 +5,15 @@ namespace ChatroomServer.Packets
 {
     public class LogMessagePacket : ServerPacket
     {
-        public long Timestamp { get; private set; }
+        public readonly long Timestamp;
 
-        public string Message { get; private set; }
+        public readonly string Message;
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="LogMessagePacket"/> class.
+        /// </summary>
+        /// <param name="timestamp"></param>
+        /// <param name="message"></param>
         public LogMessagePacket(long timestamp, string message)
         {
             PacketType = ServerPacketType.LogMessage;
@@ -19,6 +24,11 @@ namespace ChatroomServer.Packets
 
         public override byte[] Serialize()
         {
+            if (!(serializedData is null))
+            {
+                return serializedData;
+            }
+
             PacketBuilder builder = new PacketBuilder(
                 sizeof(byte) +
                 sizeof(long) +
@@ -32,6 +42,7 @@ namespace ChatroomServer.Packets
             builder.AddUInt16((ushort)Encoding.UTF8.GetByteCount(Message));
             builder.AddStringUTF8(Message);
 
+            serializedData = builder.Data;
             return builder.Data;
         }
     }

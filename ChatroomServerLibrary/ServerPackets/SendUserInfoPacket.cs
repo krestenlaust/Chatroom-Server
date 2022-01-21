@@ -7,10 +7,15 @@ namespace ChatroomServer.Packets
 {
     public class SendUserInfoPacket : ServerPacket
     {
-        public byte UserID { get; private set; }
+        public readonly byte UserID;
 
-        public string Name { get; private set; }
+        public readonly string Name;
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="SendUserInfoPacket"/> class.
+        /// </summary>
+        /// <param name="userID"></param>
+        /// <param name="name"></param>
         public SendUserInfoPacket(byte userID, string name)
         {
             PacketType = ServerPacketType.SendUserInfo;
@@ -22,6 +27,11 @@ namespace ChatroomServer.Packets
         /// <inheritdoc/>
         public override byte[] Serialize()
         {
+            if (!(serializedData is null))
+            {
+                return serializedData;
+            }
+
             PacketBuilder builder = new PacketBuilder(
                 sizeof(ServerPacketType) +
                 sizeof(byte) +
@@ -34,6 +44,7 @@ namespace ChatroomServer.Packets
             builder.AddByte((byte)Encoding.UTF8.GetByteCount(Name));
             builder.AddStringUTF8(Name);
 
+            serializedData = builder.Data;
             return builder.Data;
         }
     }

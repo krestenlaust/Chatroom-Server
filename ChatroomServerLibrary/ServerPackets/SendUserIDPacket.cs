@@ -6,8 +6,12 @@ namespace ChatroomServer.Packets
 {
     public class SendUserIDPacket : ServerPacket
     {
-        public byte UserID { get; private set; }
+        public readonly byte UserID;
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="SendUserIDPacket"/> class.
+        /// </summary>
+        /// <param name="userid"></param>
         public SendUserIDPacket(byte userid)
         {
             PacketType = ServerPacketType.SendUserID;

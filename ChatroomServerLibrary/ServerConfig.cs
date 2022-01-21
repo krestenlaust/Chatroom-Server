@@ -28,6 +28,7 @@ namespace ChatroomServer
         /// Initializes a new instance of the <see cref="ServerConfig"/> struct.
         /// </summary>
         /// <param name="maxTimeSinceLastActive">The timeout duration, before a client is disconnected, specified in milliseconds.</param>
+        /// <param name="handshakeTimeout">The duration before a handshake is timed out.</param>
         /// <param name="maxStoredMessages">The highest amount of messages stored to later be recalled when a client connects.</param>
         public ServerConfig(int maxTimeSinceLastActive, int handshakeTimeout, int maxStoredMessages)
         {

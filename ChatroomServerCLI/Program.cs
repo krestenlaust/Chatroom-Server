@@ -46,8 +46,8 @@ namespace ChatroomServerCLI
             Logger serverLogger;
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
             {
-                serverLogger = new ConsoleLogger();
                 // serverLogger = new ANSILogger();
+                serverLogger = new ConsoleLogger();
             }
             else
             {

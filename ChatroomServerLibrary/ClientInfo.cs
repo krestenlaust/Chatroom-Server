@@ -1,4 +1,5 @@
-﻿using System.Net.Sockets;
+﻿using System;
+using System.Net.Sockets;
 
 #nullable enable
 namespace ChatroomServer
@@ -14,19 +15,25 @@ namespace ChatroomServer
         public readonly TcpClient TcpClient;
 
         /// <summary>
-        /// Keeps track of when something was sent to the client, or recieved from the client.
-        /// </summary>
-        public long LastActiveTime;
-
-        /// <summary>
         /// Field is null when the client hasn't sent their name.
         /// </summary>
         public string? Name;
 
-        public ClientInfo(TcpClient tcpClient, long lastActiveTime)
+        /// <summary>
+        /// Initializes a new instance of the <see cref="ClientInfo"/> class with last active time set to now.
+        /// </summary>
+        /// <param name="tcpClient">Connection to client.</param>
+        public ClientInfo(TcpClient tcpClient)
         {
             TcpClient = tcpClient;
-            LastActiveTime = lastActiveTime;
+            LastActiveUTCTime = DateTime.UtcNow;
         }
+
+        /// <summary>
+        /// Gets when something was last sent to the client, or recieved from the client.
+        /// </summary>
+        public DateTime LastActiveUTCTime { get; private set; }
+
+        public void UpdateLastActiveTime() => LastActiveUTCTime = DateTime.UtcNow;
     }
 }

@@ -11,3 +11,6 @@ dotnet_diagnostic.SA1201.severity = silent
 
 # SA1128: Put constructor initializers on their own line
 dotnet_diagnostic.SA1128.severity = silent
+
+# SA1633: File should have header
+dotnet_diagnostic.SA1633.severity = silent

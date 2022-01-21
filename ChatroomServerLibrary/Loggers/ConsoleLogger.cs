@@ -36,7 +36,6 @@ namespace ChatroomServer.Loggers
 
             Console.WriteLine(outputSb.ToString());
             Console.ForegroundColor = currentColor;
-
         }
     }
 }

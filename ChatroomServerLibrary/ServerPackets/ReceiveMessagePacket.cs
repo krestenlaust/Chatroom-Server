@@ -8,16 +8,23 @@ namespace ChatroomServer.Packets
     public class ReceiveMessagePacket : ServerPacket
     {
         /// <summary>
-        /// 0 if public.
+        /// Gets 0 if public, otherwise the target user.
         /// </summary>
-        public byte TargetUserID { get; private set; }
+        public readonly byte TargetUserID;
 
-        public byte UserID { get; private set; }
+        public readonly byte UserID;
 
-        public long Timestamp { get; private set; }
+        public readonly long Timestamp;
 
-        public string Message { get; private set; }
+        public readonly string Message;
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="ReceiveMessagePacket"/> class.
+        /// </summary>
+        /// <param name="userid"></param>
+        /// <param name="targetID"></param>
+        /// <param name="timestamp"></param>
+        /// <param name="message"></param>
         public ReceiveMessagePacket(byte userid, byte targetID, long timestamp, string message)
         {
             PacketType = ServerPacketType.ReceiveMessage;

@@ -91,7 +91,7 @@ namespace ChatroomServer
                 // Assign client their ID
                 stream.Write(new SendUserIDPacket(userID).Serialize());
 
-                ClientInfo clientInfo = new ClientInfo(client, GetUnixTime());
+                ClientInfo clientInfo = new ClientInfo(client);
                 clients.Add(userID, clientInfo);
 
                 Logger?.Info($"{client.Client.RemoteEndPoint} connected: ID {userID}");
@@ -103,7 +103,7 @@ namespace ChatroomServer
             foreach (var client in clients)
             {
                 // Ping client if more time than whats good, has passed.
-                long timeDifference = GetUnixTime() - client.Value.LastActiveTime;
+                long timeDifference = (long)(DateTime.UtcNow - client.Value.LastActiveUTCTime).TotalMilliseconds;
 
                 // Client hasn't handshaked yet.
                 if (client.Value.Name is null)
@@ -140,7 +140,7 @@ namespace ChatroomServer
                     }
 
                     // Refresh last active.
-                    client.Value.LastActiveTime = GetUnixTime();
+                    client.Value.UpdateLastActiveTime();
 
                     byte packetID = (byte)stream.ReadByte();
 
@@ -432,7 +432,8 @@ namespace ChatroomServer
 
         private void SendPacket(byte userID, ClientInfo client, byte[] data)
         {
-            client.LastActiveTime = GetUnixTime();
+            client.UpdateLastActiveTime();
+
             if (data[0] != 1)
             {
                 Logger?.Debug("Sender pakke: " + Enum.GetName(typeof(ServerPacketType), (ServerPacketType)data[0]));
