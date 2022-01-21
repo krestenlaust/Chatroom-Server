@@ -19,11 +19,10 @@ namespace ChatroomServer
         private readonly HashSet<string> usedNames = new HashSet<string>();
         private readonly Dictionary<byte, ClientInfo> clients = new Dictionary<byte, ClientInfo>();
         private readonly Dictionary<byte, TcpClient> newClients = new Dictionary<byte, TcpClient>();
+        private readonly Queue<(string Name, ReceiveMessagePacket StoredMessage)> recallableMessages = new Queue<(string Name, ReceiveMessagePacket StoredMessage)>();
+        private readonly IUserIDDispenser<byte> userIDDispenser = new UserIDDispenser();
         private readonly TcpListener tcpListener;
         private readonly ServerConfig config;
-        private readonly Queue<(string Name, ReceiveMessagePacket StoredMessage)> recallableMessages = new Queue<(string Name, ReceiveMessagePacket StoredMessage)>();
-
-        private byte recentID = 1;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="Server"/> class.
@@ -80,8 +79,10 @@ namespace ChatroomServer
                 TcpClient client = tcpListener.AcceptTcpClient();
                 NetworkStream stream = client.GetStream();
 
+                byte? newUserID = userIDDispenser.GetNext();
+
                 // If lobby is full, turn away client.
-                if (!(GetNextUserID() is byte userID))
+                if (newUserID is null)
                 {
                     client.Close();
                     Logger?.Warning("Lobby full");
@@ -89,12 +90,12 @@ namespace ChatroomServer
                 }
 
                 // Assign client their ID
-                stream.Write(new SendUserIDPacket(userID).Serialize());
+                stream.Write(new SendUserIDPacket(newUserID.Value).Serialize());
 
                 ClientInfo clientInfo = new ClientInfo(client);
-                clients.Add(userID, clientInfo);
+                clients.Add(newUserID.Value, clientInfo);
 
-                Logger?.Info($"{client.Client.RemoteEndPoint} connected: ID {userID}");
+                Logger?.Info($"{client.Client.RemoteEndPoint} connected: ID {newUserID.Value}");
             }
 
             newClients.Clear();
@@ -396,27 +397,6 @@ namespace ChatroomServer
             }
         }
 
-        private byte? GetNextUserID()
-        {
-            byte startID = recentID;
-            if (recentID == byte.MaxValue)
-            {
-                // Søg forfra.
-                startID = 1;
-            }
-
-            for (byte i = startID; i < byte.MaxValue; i++)
-            {
-                if (!clients.ContainsKey(i) && !newClients.ContainsKey(i))
-                {
-                    recentID++;
-                    return i;
-                }
-            }
-
-            return null;
-        }
-
         private void DisconnectClient(byte userID)
         {
             Logger?.Info($"Disconnected ID: {userID}");
@@ -436,6 +416,7 @@ namespace ChatroomServer
 
             // Remove client.
             clients.Remove(userID);
+            userIDDispenser.ReleaseID(userID);
 
             // Send UserLeftPacket to all clients iteratively.
             SendPacketAll(new UserLeftPacket(userID), userID);

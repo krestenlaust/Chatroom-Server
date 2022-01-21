@@ -1,4 +1,3 @@
-using System;
 using System.Text;
 
 namespace ChatroomServer.Packets
@@ -22,6 +21,7 @@ namespace ChatroomServer.Packets
             Message = message;
         }
 
+        /// <inheritdoc/>
         public override byte[] Serialize()
         {
             if (!(serializedData is null))

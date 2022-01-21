@@ -14,8 +14,14 @@ namespace ChatroomServer
         UserLeft = 11,
     }
 
+    /// <summary>
+    /// The most general class for serializing server packets.
+    /// </summary>
     public abstract class ServerPacket : Packet<ServerPacketType>
     {
+        /// <summary>
+        /// Cache for storing serialized data.
+        /// </summary>
         protected byte[]? serializedData = null;
 
         /// <summary>

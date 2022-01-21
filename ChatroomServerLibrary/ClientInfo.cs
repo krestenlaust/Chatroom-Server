@@ -34,6 +34,9 @@ namespace ChatroomServer
         /// </summary>
         public DateTime LastActiveUTCTime { get; private set; }
 
+        /// <summary>
+        /// Changes the LastActiveUTCTime to current UTC time.
+        /// </summary>
         public void UpdateLastActiveTime() => LastActiveUTCTime = DateTime.UtcNow;
     }
 }

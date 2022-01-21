@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace ChatroomServer.Packets
+﻿namespace ChatroomServer.Packets
 {
     public class PingPacket : ServerPacket
     {
