@@ -15,12 +15,13 @@ namespace ChatroomServer
     /// </summary>
     public class Server : IDisposable
     {
+        private const string DefaultName = "Bonfire bruger";
         public Logger? Logger;
-        private readonly HashSet<string> usedNames = new HashSet<string>();
         private readonly Dictionary<byte, ClientInfo> clients = new Dictionary<byte, ClientInfo>();
-        private readonly Dictionary<byte, TcpClient> newClients = new Dictionary<byte, TcpClient>();
         private readonly Queue<(string Name, ReceiveMessagePacket StoredMessage)> recallableMessages = new Queue<(string Name, ReceiveMessagePacket StoredMessage)>();
         private readonly IUserIDDispenser<byte> userIDDispenser = new UserIDDispenser();
+        private readonly INameRegistrar nameRegistrar;
+        private readonly INameValidator nameValidator;
         private readonly TcpListener tcpListener;
         private readonly ServerConfig config;
 
@@ -33,6 +34,10 @@ namespace ChatroomServer
         {
             tcpListener = new TcpListener(System.Net.IPAddress.Any, port);
             this.config = config;
+
+            var nameManager = new NameManager(config.MinNameLength, config.MaxNameLength);
+            nameRegistrar = nameManager;
+            nameValidator = nameManager;
         }
 
         /// <summary>
@@ -46,6 +51,10 @@ namespace ChatroomServer
             tcpListener = new TcpListener(System.Net.IPAddress.Any, port);
             this.Logger = logger ?? throw new ArgumentNullException(nameof(logger));
             this.config = config;
+
+            var nameManager = new NameManager(config.MinNameLength, config.MaxNameLength);
+            nameRegistrar = nameManager;
+            nameValidator = nameManager;
         }
 
         /// <summary>
@@ -85,7 +94,7 @@ namespace ChatroomServer
                 if (newUserID is null)
                 {
                     client.Close();
-                    Logger?.Warning("Lobby full");
+                    Logger?.Warning("User ID dispenser empty: Lobby full");
                     return;
                 }
 
@@ -97,8 +106,6 @@ namespace ChatroomServer
 
                 Logger?.Info($"{client.Client.RemoteEndPoint} connected: ID {newUserID.Value}");
             }
-
-            newClients.Clear();
 
             // Pings clients
             foreach (var client in clients)
@@ -114,7 +121,7 @@ namespace ChatroomServer
                         continue;
                     }
 
-                    Logger?.Info($"Client handshake timed out: {client.Key}");
+                    Logger?.Warning($"Handshake timed out with client: {client.Key}");
                     DisconnectClient(client.Key);
 
                     continue;
@@ -176,32 +183,6 @@ namespace ChatroomServer
 
         private static long GetUnixTime() => DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
 
-        private bool IsNameValid(string name)
-        {
-            // TODO: Check length.
-            // TODO: Check for invalid characters.
-
-            // Is name taken
-            if (usedNames.Contains(name))
-            {
-                return false;
-            }
-
-            return true;
-        }
-
-        private string FixName(string name)
-        {
-            string newName = name;
-            int nextIndex = 2;
-            while (!IsNameValid(newName))
-            {
-                newName = $"{name} ({nextIndex++})";
-            }
-
-            return newName;
-        }
-
         /// <summary>
         /// Handles incoming packet.
         /// </summary>
@@ -222,11 +203,28 @@ namespace ChatroomServer
 
                     if (!(oldName is null))
                     {
-                        usedNames.Remove(oldName);
+                        nameRegistrar.DeregisterName(oldName);
                     }
 
-                    client.Name = FixName(changeNamePacket.Name);
-                    usedNames.Add(client.Name);
+                    string? fixedName = nameValidator.FixName(changeNamePacket.Name);
+                    if (fixedName is null)
+                    {
+                        client.Name = nameValidator.FixName(DefaultName);
+                    }
+                    else
+                    {
+                        client.Name = fixedName;
+                    }
+
+                    try
+                    {
+                        nameRegistrar.RegisterName(client.Name);
+                    }
+                    catch (ArgumentNullException ex)
+                    {
+                        Logger?.Error(ex.ToString());
+                        throw;
+                    }
 
                     // First time connecting
                     if (oldName is null)
@@ -409,7 +407,7 @@ namespace ChatroomServer
 
             if (!(clientInfo.Name is null))
             {
-                usedNames.Remove(clientInfo.Name);
+                nameRegistrar.DeregisterName(clientInfo.Name);
             }
 
             clientInfo.TcpClient?.Close();
@@ -458,45 +456,5 @@ namespace ChatroomServer
                 SendPacket(client.Key, packet);
             }
         }
-
-        /*
-        private void SendPacket(byte userID, ClientInfo client, byte[] data)
-        {
-            client.UpdateLastActiveTime();
-
-            if (data[0] != 1)
-            {
-                Logger?.Debug("Sender pakke: " + Enum.GetName(typeof(ServerPacketType), (ServerPacketType)data[0]));
-            }
-
-            try
-            {
-                NetworkStream stream = client.TcpClient.GetStream();
-                stream.Write(data, 0, data.Length);
-            }
-            catch (Exception ex) when (ex is IOException || ex is InvalidOperationException)
-            {
-                // Disconnect client because it isn't connected.
-                DisconnectClient(userID);
-            }
-        }
-
-        private void SendPacketAll(byte[] data, byte exceptUser = 0)
-        {
-            foreach (var client in clients)
-            {
-                if (client.Key == exceptUser)
-                {
-                    continue;
-                }
-
-                if (client.Value.Name is null)
-                {
-                    continue;
-                }
-
-                SendPacket(client.Key, client.Value, data);
-            }
-        }*/
     }
 }

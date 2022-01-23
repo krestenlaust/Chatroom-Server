@@ -12,7 +12,7 @@ namespace ChatroomServer
         public readonly int MaxTimeSinceLastActive;
 
         /// <summary>
-        /// The timeout duration, before a client is disconnected during a handshake if not responding.
+        /// The duration before a handshake is timed out.
         /// </summary>
         public readonly int HandshakeTimeout;
 
@@ -22,9 +22,19 @@ namespace ChatroomServer
         public readonly int MaxStoredMessages;
 
         /// <summary>
-        /// A message that is sent to a joining user.
+        /// The message to sent new users. If null, no message is sent.
         /// </summary>
         public readonly string? MessageOfTheDay;
+
+        /// <summary>
+        /// Shortest allowed name length (inclusive).
+        /// </summary>
+        public readonly int MinNameLength;
+
+        /// <summary>
+        /// Longest allowed name length (inclusive).
+        /// </summary>
+        public readonly int MaxNameLength;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="ServerConfig"/> struct.
@@ -32,25 +42,17 @@ namespace ChatroomServer
         /// <param name="maxTimeSinceLastActive">The timeout duration, before a client is disconnected, specified in milliseconds.</param>
         /// <param name="handshakeTimeout">The duration before a handshake is timed out.</param>
         /// <param name="maxStoredMessages">The highest amount of messages stored to later be recalled when a client connects.</param>
-        /// <param name="messageOfTheDay">The message to send new users. If null, no message is sent.</param>
-        public ServerConfig(int maxTimeSinceLastActive, int handshakeTimeout, int maxStoredMessages, string? messageOfTheDay)
+        /// <param name="messageOfTheDay">The message to sent new users. If null, no message is sent.</param>
+        /// <param name="minNameLength">Shortest allowed name length (inclusive).</param>
+        /// <param name="maxNameLength">Longest allowed name length (inclusive).</param>
+        public ServerConfig(int maxTimeSinceLastActive = 100, int handshakeTimeout = 1000, int maxStoredMessages = 10, string? messageOfTheDay = null, int minNameLength = 1, int maxNameLength = 20)
         {
             MaxTimeSinceLastActive = maxTimeSinceLastActive;
             HandshakeTimeout = handshakeTimeout;
             MaxStoredMessages = maxStoredMessages;
             MessageOfTheDay = messageOfTheDay;
+            MinNameLength = minNameLength;
+            MaxNameLength = maxNameLength;
         }
-
-        /// <summary>
-        /// Gets the default server configuration:
-        /// <c>MaxTimeSinceLastActive</c> = 100 ms,
-        /// <c>HandshakeTimeout</c> = 1000 ms,
-        /// <c>MaxStoredMessages</c> = 10.
-        /// </summary>
-        public static ServerConfig Default => new ServerConfig(
-            maxTimeSinceLastActive: 100,
-            handshakeTimeout: 1000,
-            maxStoredMessages: 10,
-            messageOfTheDay: null);
     }
 }
