@@ -40,56 +40,56 @@
         /// Logs a debug message to the console.
         /// </summary>
         /// <param name="msg">The value to write.</param>
-        public virtual void Debug(string msg)
+        public virtual void Debug(string msg, params (string Title, object Value)[] attributes)
         {
             if ((byte)LogLevel > (byte)LogType.Debug)
             {
                 return;
             }
 
-            Output(msg, LogType.Debug);
+            Output(msg, LogType.Debug, attributes);
         }
 
         /// <summary>
         /// Logs info to the console.
         /// </summary>
         /// <param name="msg">The value to write.</param>
-        public virtual void Info(string msg)
+        public virtual void Info(string msg, params (string Title, object Value)[] attributes)
         {
             if ((byte)LogLevel > (byte)LogType.Info)
             {
                 return;
             }
 
-            Output(msg, LogType.Info);
+            Output(msg, LogType.Info, attributes);
         }
 
         /// <summary>
         /// Logs a warning to the console.
         /// </summary>
         /// <param name="msg">The value to write.</param>
-        public virtual void Warning(string msg)
+        public virtual void Warning(string msg, params (string Title, object Value)[] attributes)
         {
             if ((byte)LogLevel > (byte)LogType.Warning)
             {
                 return;
             }
 
-            Output(msg, LogType.Warning);
+            Output(msg, LogType.Warning, attributes);
         }
 
         /// <summary>
         /// Logs an error to the console.
         /// </summary>
         /// <param name="msg">The value to write.</param>
-        public virtual void Error(string msg)
+        public virtual void Error(string msg, params (string Title, object Value)[] attributes)
         {
             if ((byte)LogLevel > (byte)LogType.Error)
             {
                 return;
             }
 
-            Output(msg, LogType.Error);
+            Output(msg, LogType.Error, attributes);
         }
 
         /// <summary>
@@ -97,6 +97,6 @@
         /// </summary>
         /// <param name="msg">The value to write.</param>
         /// <param name="logType">The type of logging.</param>
-        protected abstract void Output(string msg, LogType logType);
+        protected abstract void Output(string msg, LogType logType, (string Title, object Value)[] attributes);
     }
 }

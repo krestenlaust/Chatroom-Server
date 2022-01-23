@@ -9,7 +9,7 @@ namespace ChatroomServer.Loggers
     public class ANSILogger : Logger
     {
         /// <inheritdoc/>
-        protected override void Output(string msg, LogType logType)
+        protected override void Output(string msg, LogType logType, (string Title, object Value)[] attributes)
         {
             StringBuilder outputSb = new StringBuilder();
 
@@ -29,6 +29,15 @@ namespace ChatroomServer.Loggers
             outputSb.Append('[');
             outputSb.Append(Enum.GetName(typeof(LogType), logType));
             outputSb.Append(']');
+
+            foreach (var item in attributes)
+            {
+                outputSb.Append('[');
+                outputSb.Append(item.Title);
+                outputSb.Append(": ");
+                outputSb.Append(item.Value);
+                outputSb.Append(']');
+            }
 
             outputSb.Append(' ');
             outputSb.Append(msg);

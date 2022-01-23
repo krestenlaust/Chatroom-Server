@@ -104,7 +104,7 @@ namespace ChatroomServer
                 ClientInfo clientInfo = new ClientInfo(client);
                 clients.Add(newUserID.Value, clientInfo);
 
-                Logger?.Info($"{client.Client.RemoteEndPoint} connected: ID {newUserID.Value}");
+                Logger?.Info("has connected", ("ID", newUserID.Value), ("Endpoint", client.Client.RemoteEndPoint));
             }
 
             // Pings clients
@@ -121,7 +121,7 @@ namespace ChatroomServer
                         continue;
                     }
 
-                    Logger?.Warning($"Handshake timed out with client: {client.Key}");
+                    Logger?.Warning($"handshake timed out", ("ID", client.Key), ("Endpoint", client.Value.TcpClient.Client.RemoteEndPoint));
                     DisconnectClient(client.Key);
 
                     continue;
@@ -155,7 +155,7 @@ namespace ChatroomServer
                     if (!Enum.IsDefined(typeof(ClientPacketType), packetID))
                     {
                         // Unknown packet: Everything is fine!
-                        Logger?.Warning($"Received unknown packet from {client.Key}");
+                        Logger?.Warning($"Received unknown packet", ("ID", client.Key), ("Endpoint", client.Value.TcpClient.Client.RemoteEndPoint));
                         continue;
                     }
 
@@ -165,12 +165,12 @@ namespace ChatroomServer
                 }
                 catch (InvalidOperationException ex)
                 {
-                    Logger?.Warning($"Client disconnect by invalid operation: {ex}");
+                    Logger?.Warning($"Client disconnect by invalid operation: {ex}", ("ID", client.Key));
                     DisconnectClient(client.Key);
                 }
                 catch (SocketException ex)
                 {
-                    Logger?.Debug($"Client disconnected by Socket exception: {ex}");
+                    Logger?.Warning($"Client disconnected by Socket exception: {ex}", ("ID", client.Key));
                     DisconnectClient(client.Key);
                 }
                 catch (Exception ex)
@@ -188,9 +188,9 @@ namespace ChatroomServer
         /// </summary>
         /// <param name="stream"></param>
         /// <param name="packetType"></param>
-        /// <param name="clientID"></param>
+        /// <param name="userID"></param>
         /// <param name="client"></param>
-        private void OnPacketReceived(NetworkStream stream, ClientPacketType packetType, byte clientID, ClientInfo client)
+        private void OnPacketReceived(NetworkStream stream, ClientPacketType packetType, byte userID, ClientInfo client)
         {
             // Parse and handle the packets ChangeNamePacket and SendMessagePacket,
             // by responding to all other clients with a message or a userinfo update
@@ -229,18 +229,18 @@ namespace ChatroomServer
                     // First time connecting
                     if (oldName is null)
                     {
-                        OnClientHandshakeFinished(clientID);
+                        OnClientHandshakeFinished(userID);
 
-                        Logger?.Info("User connected: " + client.Name);
+                        Logger?.Info("has connected", ("ID", userID), ("Name", client.Name));
                         ServerLogAll($"{client.Name} forbandt!");
                     }
                     else
                     {
-                        Logger?.Info($"User {clientID} name updated from {oldName} to {client.Name}");
+                        Logger?.Info($"changed their name to {client.Name}", ("ID", userID), ("Name", oldName));
                         ServerLogAll($"{oldName} skiftede navn til {client.Name}");
                     }
 
-                    SendPacketAll(new SendUserInfoPacket(clientID, client.Name));
+                    SendPacketAll(new SendUserInfoPacket(userID, client.Name));
                     break;
                 case ClientPacketType.SendMessage:
                     var sendMessagePacket = new SendMessagePacket(stream);
@@ -252,7 +252,7 @@ namespace ChatroomServer
                     }
 
                     ReceiveMessagePacket responsePacket = new ReceiveMessagePacket(
-                        clientID,
+                        userID,
                         sendMessagePacket.TargetUserID,
                         GetUnixTime(),
                         sendMessagePacket.Message);
@@ -260,7 +260,8 @@ namespace ChatroomServer
                     // Debug display chatmessage.
                     if (!(Logger is null))
                     {
-                        DebugDisplayChatMessage(clientID, sendMessagePacket.TargetUserID, sendMessagePacket.Message);
+                        // DebugDisplayChatMessage(clientID, sendMessagePacket.TargetUserID, sendMessagePacket.Message);
+                        Logger.Info($"messaged ID {sendMessagePacket.TargetUserID}: \"{sendMessagePacket.Message}\"", ("ID", userID), ("Name", client.Name));
                     }
 
                     // Store chatmessage if public.
@@ -278,7 +279,7 @@ namespace ChatroomServer
                     }
                     else
                     {
-                        SendPacket(clientID, responsePacket);
+                        SendPacket(userID, responsePacket);
 
                         if (!clients.TryGetValue(sendMessagePacket.TargetUserID, out ClientInfo targetClient))
                         {
@@ -291,10 +292,10 @@ namespace ChatroomServer
 
                     break;
                 case ClientPacketType.Disconnect:
-                    Logger?.Info($"Client: {client.Name} has disconnected");
+                    Logger?.Info($"signaled disconnection", ("ID", userID), ("Name", client.Name));
 
                     ServerLogAll($"{client.Name} forsvandt!");
-                    DisconnectClient(clientID);
+                    DisconnectClient(userID);
                     break;
                 default:
                     break;
@@ -311,6 +312,7 @@ namespace ChatroomServer
             SendPacketAll(new LogMessagePacket(GetUnixTime(), serverMessage));
         }
 
+        /*
         private void DebugDisplayChatMessage(byte authorID, byte targetID, string chatMsg)
         {
             const int minimumDisplayedMessage = 15;
@@ -332,7 +334,7 @@ namespace ChatroomServer
             }
 
             Logger?.Info(outputMsg.ToString());
-        }
+        }*/
 
         private void OnClientHandshakeFinished(byte clientID)
         {
@@ -397,7 +399,7 @@ namespace ChatroomServer
 
         private void DisconnectClient(byte userID)
         {
-            Logger?.Info($"Disconnected ID: {userID}");
+            Logger?.Info($"has disconnected", ("ID", userID), ("Name", clients[userID].Name));
 
             if (!clients.TryGetValue(userID, out ClientInfo clientInfo))
             {
