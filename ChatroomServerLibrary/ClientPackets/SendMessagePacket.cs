@@ -11,6 +11,10 @@ namespace ChatroomServer.ClientPackets
 
         public string Message { get; private set; }
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="SendMessagePacket"/> class.
+        /// </summary>
+        /// <param name="stream"></param>
         public SendMessagePacket(NetworkStream stream) : base(stream)
         {
             PacketType = ClientPacketType.SendMessage;

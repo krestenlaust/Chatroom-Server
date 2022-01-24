@@ -1,6 +1,7 @@
 ﻿using System;
 using System.IO;
 using System.Net.Sockets;
+using ChatroomServer.ServerPackets;
 
 #nullable enable
 namespace ChatroomServer
@@ -21,19 +22,10 @@ namespace ChatroomServer
         public readonly byte ID;
 
         /// <summary>
-        /// Field is null when the client hasn't sent their name.
-        /// </summary>
-        public string? Name;
-
-        /// <summary>
-        /// Clients flagged as disconnected, will be removed.
-        /// </summary>
-        public bool Disconnected = false;
-
-        /// <summary>
         /// Initializes a new instance of the <see cref="Client"/> class with last active time set to now.
         /// </summary>
         /// <param name="tcpClient">Connection to client.</param>
+        /// <param name="ID">The unique ID given to the client.</param>
         public Client(TcpClient tcpClient, byte ID)
         {
             TcpClient = tcpClient;
@@ -42,17 +34,31 @@ namespace ChatroomServer
         }
 
         /// <summary>
+        /// Gets or sets the clients name.
+        /// Is null when the client hasn't finished handshaking.
+        /// </summary>
+        public string? Name { get; set; }
+
+        /// <summary>
         /// Gets when something was last sent to the client, or recieved from the client.
         /// </summary>
         public DateTime LastActiveUTCTime { get; private set; }
+
+        /// <summary>
+        /// Gets a value indicating whether a client should be removed as it's disconnected.
+        /// </summary>
+        internal bool Disconnected { get; private set; } = false;
 
         /// <summary>
         /// Changes the LastActiveUTCTime to current UTC time.
         /// </summary>
         public void UpdateLastActiveTime() => LastActiveUTCTime = DateTime.UtcNow;
 
-        public void SendPacket<T>(T packet)
-            where T : ServerPacket
+        /// <summary>
+        /// Sends a packet to the client.
+        /// </summary>
+        /// <param name="packet">The packet to send.</param>
+        public void SendPacket(ServerPacket packet)
         {
             if (Disconnected)
             {
@@ -72,6 +78,15 @@ namespace ChatroomServer
                 // Disconnect client because it isn't connected.
                 Disconnected = true;
             }
+        }
+
+        /// <summary>
+        /// Creates a log packet and sends it to the client.
+        /// </summary>
+        /// <param name="serverMessage">The message to display.</param>
+        public void SendServerLog(string serverMessage)
+        {
+            SendPacket(new LogMessagePacket(serverMessage));
         }
     }
 }

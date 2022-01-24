@@ -1,32 +1,28 @@
 using System.Text;
 
-namespace ChatroomServer.Packets
+namespace ChatroomServer.ServerPackets
 {
-    public class LogMessagePacket : ServerPacket
+    public class LogMessagePacket : TimestampedPacket
     {
-        public readonly long Timestamp;
-
         public readonly string Message;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="LogMessagePacket"/> class.
         /// </summary>
-        /// <param name="timestamp"></param>
-        /// <param name="message"></param>
-        public LogMessagePacket(long timestamp, string message)
+        /// <param name="message">The message field of the packet.</param>
+        public LogMessagePacket(string message)
         {
             PacketType = ServerPacketType.LogMessage;
 
-            Timestamp = timestamp;
             Message = message;
         }
 
         /// <inheritdoc/>
         public override byte[] Serialize()
         {
-            if (!(serializedData is null))
+            if (!(SerializedData is null))
             {
-                return serializedData;
+                return SerializedData;
             }
 
             PacketBuilder builder = new PacketBuilder(
@@ -42,7 +38,7 @@ namespace ChatroomServer.Packets
             builder.AddUInt16((ushort)Encoding.UTF8.GetByteCount(Message));
             builder.AddStringUTF8(Message);
 
-            serializedData = builder.Data;
+            SerializedData = builder.Data;
             return builder.Data;
         }
     }

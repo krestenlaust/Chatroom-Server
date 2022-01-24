@@ -1,4 +1,4 @@
-﻿namespace ChatroomServer.Packets
+﻿namespace ChatroomServer.ServerPackets
 {
     public class SendUserIDPacket : ServerPacket
     {

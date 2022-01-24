@@ -1,9 +1,9 @@
 ﻿using System.Text;
 
 #nullable enable
-namespace ChatroomServer.Packets
+namespace ChatroomServer.ServerPackets
 {
-    public class ReceiveMessagePacket : ServerPacket
+    public class ReceiveMessagePacket : TimestampedPacket
     {
         /// <summary>
         /// Gets 0 if public, otherwise the target user.
@@ -12,8 +12,6 @@ namespace ChatroomServer.Packets
 
         public readonly byte UserID;
 
-        public readonly long Timestamp;
-
         public readonly string Message;
 
         /// <summary>
@@ -21,24 +19,22 @@ namespace ChatroomServer.Packets
         /// </summary>
         /// <param name="userid"></param>
         /// <param name="targetID"></param>
-        /// <param name="timestamp"></param>
         /// <param name="message"></param>
-        public ReceiveMessagePacket(byte userid, byte targetID, long timestamp, string message)
+        public ReceiveMessagePacket(byte userid, byte targetID, string message)
         {
             PacketType = ServerPacketType.ReceiveMessage;
 
             UserID = userid;
             TargetUserID = targetID;
-            Timestamp = timestamp;
             Message = message;
         }
 
         /// <inheritdoc/>
         public override byte[] Serialize()
         {
-            if (!(serializedData is null))
+            if (!(SerializedData is null))
             {
-                return serializedData;
+                return SerializedData;
             }
 
             PacketBuilder builder = new PacketBuilder(
@@ -60,7 +56,7 @@ namespace ChatroomServer.Packets
             builder.AddUInt16((ushort)Encoding.UTF8.GetByteCount(Message));
             builder.AddStringUTF8(Message);
 
-            serializedData = builder.Data;
+            SerializedData = builder.Data;
             return builder.Data;
         }
     }

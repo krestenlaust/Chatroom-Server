@@ -62,8 +62,7 @@ namespace ChatroomServerCLI
                 maxStoredMessages: 10,
                 messageOfTheDay: "Velkommen til denne Chatrum-protokol(™)-kompatible server (serverplads sponseret af https://LMHVPN.INFO)");
 
-            using Server server = new Server(serverPort, selectedConfig, serverLogger);
-            server.Start();
+            using ServerContext server = Server.BindServer(serverPort, selectedConfig, serverLogger);
             Console.WriteLine($"Listening on {LocalIP}:{serverPort}");
 
             Stopwatch sw = new Stopwatch();

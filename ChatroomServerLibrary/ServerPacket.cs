@@ -20,9 +20,9 @@ namespace ChatroomServer
     public abstract class ServerPacket : Packet<ServerPacketType>
     {
         /// <summary>
-        /// Cache for storing serialized data.
+        /// Gets or sets stored serialized data.
         /// </summary>
-        protected byte[]? serializedData = null;
+        protected byte[]? SerializedData { get; set; } = null;
 
         /// <summary>
         /// Serializes the packet.

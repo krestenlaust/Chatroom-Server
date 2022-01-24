@@ -1,7 +1,7 @@
 ﻿using System.Text;
 
 #nullable enable
-namespace ChatroomServer.Packets
+namespace ChatroomServer.ServerPackets
 {
     public class SendUserInfoPacket : ServerPacket
     {
@@ -25,9 +25,9 @@ namespace ChatroomServer.Packets
         /// <inheritdoc/>
         public override byte[] Serialize()
         {
-            if (!(serializedData is null))
+            if (!(SerializedData is null))
             {
-                return serializedData;
+                return SerializedData;
             }
 
             PacketBuilder builder = new PacketBuilder(
@@ -42,7 +42,7 @@ namespace ChatroomServer.Packets
             builder.AddByte((byte)Encoding.UTF8.GetByteCount(Name));
             builder.AddStringUTF8(Name);
 
-            serializedData = builder.Data;
+            SerializedData = builder.Data;
             return builder.Data;
         }
     }
