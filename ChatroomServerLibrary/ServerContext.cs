@@ -38,8 +38,8 @@ namespace ChatroomServer
             nameRegistrar = nameManager;
             nameValidator = nameManager;
 
-            RegisterServerFeature(new Features.MessageOfTheDay());
             RegisterServerFeature(new Features.RecallMessages());
+            RegisterServerFeature(new Features.MessageOfTheDay());
         }
 
         /// <summary>
@@ -271,8 +271,8 @@ namespace ChatroomServer
             // by responding to all other clients with a message or a userinfo update
             switch (packetType)
             {
-                case ClientPacketType.ChangeName:
-                    var changeNamePacket = new ChangeNamePacket(stream);
+                case ClientPacketType.TellName:
+                    var changeNamePacket = new TellNamePacket(stream);
                     packetReceived = changeNamePacket;
 
                     string? oldName = client.Name;
@@ -305,10 +305,10 @@ namespace ChatroomServer
                     // First time connecting
                     if (oldName is null)
                     {
+                        OnHandshakeFinished(new HandshakeFinishedEventArgs(client));
+
                         Logger?.Info("has connected", ("ID", client.ID), ("Name", client.Name));
                         ServerLogAll($"{client.Name} forbandt!");
-
-                        OnHandshakeFinished(new HandshakeFinishedEventArgs(client));
                     }
                     else
                     {

@@ -9,7 +9,7 @@ namespace ChatroomServer
     {
         Ping = 1,
         SendMessage = 2,
-        ChangeName = 4,
+        TellName = 4,
         Disconnect = 10,
     }
 

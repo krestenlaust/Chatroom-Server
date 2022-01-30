@@ -1,0 +1,114 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ClassDiagram MajorVersion="1" MinorVersion="1">
+  <Class Name="ChatroomServer.ClientPackets.TellNamePacket">
+    <Position X="7.25" Y="1.75" Width="1.75" />
+    <Compartments>
+      <Compartment Name="Methods" Collapsed="true" />
+    </Compartments>
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>ClientPackets\TellNamePacket.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ChatroomServer.ClientPackets.DisconnectPacket">
+    <Position X="7.25" Y="3.5" Width="1.75" />
+    <Compartments>
+      <Compartment Name="Methods" Collapsed="true" />
+    </Compartments>
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>ClientPackets\DisconnectPacket.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ChatroomServer.ClientPackets.SendMessagePacket">
+    <Position X="9.25" Y="1.75" Width="1.75" />
+    <Compartments>
+      <Compartment Name="Methods" Collapsed="true" />
+    </Compartments>
+    <TypeIdentifier>
+      <HashCode>AAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAIAAAAAA=</HashCode>
+      <FileName>ClientPackets\SendMessagePacket.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ChatroomServer.ServerPackets.LogMessagePacket">
+    <Position X="0.5" Y="2" Width="1.75" />
+    <Compartments>
+      <Compartment Name="Methods" Collapsed="true" />
+    </Compartments>
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAACAAAAAAAAAAIAAAAAA=</HashCode>
+      <FileName>ServerPackets\LogMessagePacket.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ChatroomServer.ServerPackets.PingPacket">
+    <Position X="2.5" Y="4" Width="1.75" />
+    <Compartments>
+      <Compartment Name="Methods" Collapsed="true" />
+    </Compartments>
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAACAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>ServerPackets\PingPacket.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ChatroomServer.ServerPackets.ReceiveMessagePacket">
+    <Position X="2.5" Y="2" Width="1.75" />
+    <Compartments>
+      <Compartment Name="Methods" Collapsed="true" />
+    </Compartments>
+    <TypeIdentifier>
+      <HashCode>AAEAAAAAAAAAAAAAAAAAAAgAACAAAAAAAAAAIAAAAAA=</HashCode>
+      <FileName>ServerPackets\ReceiveMessagePacket.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ChatroomServer.ServerPackets.SendUserIDPacket">
+    <Position X="4.5" Y="3.75" Width="1.75" />
+    <Compartments>
+      <Compartment Name="Methods" Collapsed="true" />
+    </Compartments>
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAgAACAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>ServerPackets\SendUserIDPacket.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ChatroomServer.ServerPackets.SendUserInfoPacket">
+    <Position X="4.5" Y="2" Width="1.75" />
+    <Compartments>
+      <Compartment Name="Methods" Collapsed="true" />
+    </Compartments>
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAwAACAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>ServerPackets\SendUserInfoPacket.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ChatroomServer.ServerPackets.TimestampedPacket" Collapsed="true">
+    <Position X="1.25" Y="0.75" Width="1.5" />
+    <Compartments>
+      <Compartment Name="Methods" Collapsed="true" />
+    </Compartments>
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAACAACAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>ServerPackets\TimestampedPacket.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ChatroomServer.ServerPackets.UserLeftPacket">
+    <Position X="0.5" Y="3.75" Width="1.75" />
+    <Compartments>
+      <Compartment Name="Methods" Collapsed="true" />
+    </Compartments>
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAgAACAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>ServerPackets\UserLeftPacket.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ChatroomServer.ClientPackets.PingPacket">
+    <Position X="9.25" Y="3.5" Width="1.75" />
+    <Compartments>
+      <Compartment Name="Methods" Collapsed="true" />
+    </Compartments>
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>ClientPackets\PingPacket.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Font Name="Segoe UI" Size="9" />
+</ClassDiagram>

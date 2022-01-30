@@ -40,7 +40,7 @@ namespace ChatroomServer
         public string? Name { get; set; }
 
         /// <summary>
-        /// Gets when something was last sent to the client, or recieved from the client.
+        /// Gets when something was last sent to the client, or received from the client.
         /// </summary>
         public DateTime LastActiveUTCTime { get; private set; }
 

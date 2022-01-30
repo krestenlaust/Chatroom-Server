@@ -3,13 +3,13 @@ using System.Text;
 
 namespace ChatroomServer.ClientPackets
 {
-    public class ChangeNamePacket : ClientPacket
+    public class TellNamePacket : ClientPacket
     {
         public string Name { get; private set; }
 
-        public ChangeNamePacket(NetworkStream stream) : base(stream)
+        public TellNamePacket(NetworkStream stream) : base(stream)
         {
-            PacketType = ClientPacketType.ChangeName;
+            PacketType = ClientPacketType.TellName;
 
             byte length = (byte)stream.ReadByte();
 
